@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- For demo purposes only, we use Bulma to style page elements. You can use other libraries if you wish -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
+    <title>Anura Web Core SDK - Camera</title>
+    <script type="importmap">
+        {
+          "imports": {
+            "@nuralogix.ai/anura-web-core-sdk": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk",
+            "@nuralogix.ai/anura-web-core-sdk/helpers": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/helpers/index.min.mjs",
+            "@nuralogix.ai/anura-web-core-sdk/masks/vital": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/vital/index.mjs"
+          }
+        }
+    </script>
+    <style>
+        .measurement-container {width: 1280px; height: 720px;}
+    </style>    
+</head>
+<body>
+    <section class="section">
+        <div class="is-flex mb-4">
+            <div>
+                <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+            </div>
+            <div class="is-align-content-center is-size-3 has-text-weight-medium">
+                Anura Web Core SDK
+            </div>
+        </div>
+        <hr>
+        <div>
+            <div class="select">
+                <select title="camera-select" id="camera-list"></select>
+            </div>
+            <button type="button" class="button" id="toggle-camera" disabled>Open</button>
+            <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
+        </div>
+    </section>
+    <div class="measurement-container">
+        <div id="measurement"></div>
+    </div>
+    <script type="module">
+        import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
+        import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
+        import { VitalMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
+        const { CameraController } = helpers;
+        let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
+
+        const mediaElement = document.getElementById('measurement');
+        const cameraList = document.getElementById('camera-list');
+        const toggleCameraButton = document.getElementById('toggle-camera');
+        const toggleMeasurementButton = document.getElementById('toggle-measurement');
+        if (mediaElement && mediaElement instanceof HTMLDivElement) {
+            const settings = {
+                mediaElement,
+                assetFolder: 'https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/assets',
+                apiUrl: 'api.deepaffex.ai',
+                mirrorVideo: true,
+                displayMediaStream: true,
+                metrics: false,
+                logger: {
+                    extractionLibWasm: false,
+                    mediaPipe: false,
+                    beforeRESTCall: false,
+                    afterRESTCall: false,
+                    sdk: false,
+                    extractionWorker: false,
+                    faceTrackerWorkers: false,
+                }
+            };
+            const mask = new VitalMask();
+            const measurement = await Measurement.init(settings);
+            measurement.setSettings({
+                logger: {
+                    webSocket: false,
+                }
+            });
+
+            const demographics = {
+                age: 40,
+                height: 180,
+                weight: 60,
+                sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
+                smoking: faceAttributeValue.SMOKER_FALSE,
+                bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
+                diabetes: faceAttributeValue.DIABETES_NONE,
+                unit: 'Metric'
+            };
+            measurement.setDemographics(demographics);
+
+            const camera = CameraController.init();
+            let deviceId = '';
+            let isCameraOpen = false;
+            const onSelectedDeviceChanged = (e) => {
+                const { deviceId } = e.detail;
+                console.log('Selected deviceId', deviceId);
+            };
+
+            const onCameraStatus = async (e) => {
+            const { isOpen } = e.detail;
+            if (isOpen) {
+                const { capabilities } = e.detail;
+                console.log({ capabilities });
+            }
+            isCameraOpen = isOpen;
+            if (isCameraOpen) {
+                await measurement.setMediaStream(camera.cameraStream);
+                const success = measurement.setObjectFit(mask.objectFit);
+                if (success) {
+                    measurement.loadMask(mask.getSvg());
+                    await measurement.startTracking();
+                }            
+            }
+            // mediaElement.style.height = isCameraOpen ? '100%' : 'unset';
+            }        
+            camera.addEventListener('selectedDeviceChanged', (onSelectedDeviceChanged));
+            camera.addEventListener('cameraStatus', (onCameraStatus));
+            const isPermissionGranted = await camera.requestPermission();
+            if (isPermissionGranted && cameraList) {
+                await camera.list();
+                cameraList.innerHTML = ''; // Clears all options
+                const list = camera.mediaDevices.map(mediaDevice => ({
+                    value: mediaDevice.device.deviceId, text: mediaDevice.device.label
+                }));
+                list.forEach(optionData => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = optionData.value;
+                    optionElement.textContent = optionData.text;
+                    cameraList.appendChild(optionElement);
+                });
+                cameraList.addEventListener('change', (e) => {
+                    camera.setDeviceId(e.target.value);
+                });
+            }
+
+            const disableButton = (id, disabled) => {
+            const element = document.getElementById(id);
+            if (element) {
+                if (disabled) {
+                    element.setAttribute('disabled', true);
+                } else {
+                    element.removeAttribute('disabled');
+                }
+            };
+            }
+
+            const toggleCamera = async () => {
+                if (isCameraOpen) {
+                    camera.stop();
+                    disableButton('toggle-measurement', true);
+                    disableButton('toggle-camera', false);
+                    await measurement.stopTracking();
+                    mask.setMaskVisibility(false);
+                } else {
+                    const success = await camera.start(1280, 720);
+                    await measurement.startTracking();
+                }
+            }
+
+            if (toggleCameraButton) {
+                toggleCameraButton.addEventListener('click', async () => {
+                    toggleCameraButton.textContent === 'Open'
+                    ? toggleCameraButton.textContent = 'Close'
+                    : toggleCameraButton.textContent = 'Open';
+                    await toggleCamera();
+                });
+            }
+
+            if (toggleMeasurementButton) {
+                toggleMeasurementButton.addEventListener('click', async () => {
+                    // You can optionally pass user data to the startMeasurement method
+                    // Both userProfileId and partnerId are optional
+                    // const userData = {
+                    //     userProfileId: 'userProfileId',
+                    //     partnerId: 'partnerId',
+                    // };
+                    await measurement.startMeasurement();
+                });
+            }
+
+            // measurement.on.bytesDownloaded = (bytes, url, done) => {
+            //   console.log(`bytes downloaded`, bytes, url, done);
+            // };
+
+            // measurement.on.downloadError = (url, error) => {
+            //   console.log(`download error`, url, error);
+            // };
+
+            // measurement.on.beforeRESTCall = (timestamp, actionId) => {
+            //   console.log('beforeRESTCall', timestamp, actionId);
+            // };
+
+            // measurement.on.afterRESTCall = (timestamp, actionId, status, error) => {
+            //   console.log('afterRESTCall', timestamp, actionId, status, error);
+            // };
+
+            measurement.on.faceTrackerStateChanged = (state) => {
+            trackerState = state;
+            if (state === faceTrackerState.LOADED) {
+                console.log(measurement.getVersion());
+                disableButton('toggle-camera', false);
+            }
+            if (state === faceTrackerState.READY) disableButton('toggle-measurement', false);
+                console.log('faceTrackerStateChanged', state);
+            };
+
+            measurement.on.resultsReceived = results => {
+                const { points, resultsOrder, finalChunkNumber } = results;
+                // Intermediate results
+                if (resultsOrder < finalChunkNumber) {
+                    mask.setIntermediateResults(points);
+                    const pointList = Object.keys(points);
+                    const IntermediateResults = {};
+                    if (pointList.includes('SNR')) IntermediateResults.SNR = points.SNR.value;
+                    if (pointList.includes('HR_BPM')) IntermediateResults.HR_BPM = points.HR_BPM.value;
+                    console.log('Intermediate results', IntermediateResults);
+                }
+                // Final results
+                if (resultsOrder === finalChunkNumber) {
+                    console.log('Final results', results);
+                }
+            }
+
+            measurement.on.constraintsUpdated = (feedback, status) => {
+            // console.log('Constraints Updated', feedback, status);
+            }
+
+            measurement.on.facialLandmarksUpdated = (landmarks) => {
+                if(landmarks.face.detected) {
+                    mask.draw(landmarks);
+                } else {
+                    console.log('No face detected');
+                }
+            }
+
+            measurement.on.mediaElementResize = event => {
+                mask.resize(event.detail);
+                console.log('mediaElementResize', event);
+            }
+            
+            const apiUrl = 'http://localhost:7000/api';
+
+            const studyId = await fetch(`${apiUrl}/studyId`);
+            const studyIdResponse = await studyId.json();
+
+            const token = await fetch(`${apiUrl}/token`);
+            const tokenResponse = await token.json();
+
+            if (studyIdResponse.status === '200' && tokenResponse.status === '200') {
+                await measurement.prepare(
+                    tokenResponse.token,
+                    tokenResponse.refreshToken,
+                    studyIdResponse.studyId
+                );
+                await measurement.downloadAssets();
+            } else {
+                console.error('Failed to get Study ID and Token pair');
+            }
+        }
+    </script>
+  </body>
+</html>

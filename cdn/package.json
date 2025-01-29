@@ -1,0 +1,13 @@
+{
+  "name": "cdn",
+  "version": "1.0.0",
+  "description": "Anura Web Core SDK - CDN",
+  "author": "Hamed Hassanzadeh Amin",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "start": "node --disable-warning=ExperimentalWarning --env-file=.env index.ts"
+  },
+  "keywords": [],
+  "license": "MIT"
+}

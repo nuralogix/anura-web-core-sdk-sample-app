@@ -1,0 +1,33 @@
+{
+  "name": "anura-web-core-sdk-server-sample-app",
+  "description": "Anura Web Core SDK - Server Sample App",
+  "version": "1.0.0",
+  "exports": {
+    "import": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    }
+  },
+  "scripts": {
+    "type-check": "tsc"
+  },
+  "type": "module",
+  "keywords": ["Anura web core sdk", "Nuralogix", "DFX", "AI", "DeepAffex"],
+  "author": "Hamed Hassanzadeh Amin",
+  "license": "MIT",
+  "dependencies": {
+    "@nuralogix.ai/dfx-api-client": "^1.0.72",
+    "cors": "^2.8.5",
+    "express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/connect-livereload": "^0.6.3",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/livereload": "^0.9.5",
+    "@types/node": "^22.10.5",
+    "connect-livereload": "^0.6.1",
+    "livereload": "^0.9.3",
+    "typescript": "^5.7.2"
+  }
+}

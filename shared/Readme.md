@@ -1,3 +1,3 @@
 [Back to Main README](../README.md)
 
-Coming soon.
+This folder contains shared assets.
