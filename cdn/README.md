@@ -8,7 +8,13 @@
 
 1. Install Node.js v23.6.0 or higher.
 
-2. Install the server packages:
+2. If you want to use `yarn`, make sure it is installed globally.
+
+```bash
+npm install --global yarn
+```
+
+3. Install the server packages:
 
 ```bash
 cd server
@@ -16,18 +22,18 @@ yarn
 cd ..
 ```
 
-3. Update the environment variables:
+4. Update the environment variables:
 
 Switch to the `cdn` folder and update the `.env` file with your `STUDY_ID` and
 `LICENSE_KEY`.
 
-4. Run the server:
+5. Run the server:
 
 ```bash
 yarn start
 ```
 
-5. Open the browser and
+6. Open the browser and
     - a. Navigate to `http://localhost:7000` to test the SDK with a webcam
     - b. Navigate to `http://localhost:7000/video.html` to test the SDK with
     a video file
@@ -35,7 +41,42 @@ yarn start
 
 ## Load from a CDN
 You can use `Anura Web Core SDK` directly in the browser via a CDN such as
-unpkg or jsDelivr.
+ [unpkg](https://www.unpkg.com/), [jsDelivr](https://www.jsdelivr.com/),
+ [Skypack](https://www.skypack.dev/), [esm.sh](https://esm.sh/) and
+ [npmmirror](https://npmmirror.com/) (a complete mirror of npmjs.com in China).
+ 
+ Here are some key advantages of using import maps to load
+`Anura Web Core SDK` from well-known CDNs:
+
+
+### 1. Simplifies Dependency Management
+- No need for a bundler like Webpack or Rollup to resolve module imports.
+- Works directly in the browser without additional setup.
+
+### 2. Faster Load Times with CDNs
+- CDNs optimize delivery with caching, compression, and edge locations.
+- Reduces latency compared to self-hosted libraries.
+
+### 3. Automatic Versioning and Updates
+- Easily switch versions by updating the import map.
+- Can use version pinning (e.g., `unpkg.com/:package@:version/:file`).
+
+### 4. Reduces Build Complexity
+- No need for `npm install` or package-lock files for browser-only apps.
+- Avoids dependency resolution issues in bundlers.
+
+### 5. Optimized for Browser Environments
+- CDNs serve optimized ESM modules with minimal transformations.
+- Avoids CommonJS-to-ESM interop issues.
+
+### 6. Flexible Module Resolution
+- Define custom mappings to override default module resolutions.
+- Allows switching between different CDNs or self-hosted versions without code
+changes.
+
+### 7. Ideal for Prototyping and Demos
+- Great for quick experiments without setting up a full build pipeline.
+- Reduces friction when sharing code samples.
 
 ### Using Import Maps
 
