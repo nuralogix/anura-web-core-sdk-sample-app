@@ -1,6 +1,6 @@
 [Back to Main README](../README.md)
 
-# Anura Web Core SDK
+# Anura Web Core SDK - CDN sample application
 
 <img src="../shared/anura-web-core-sdk.svg" width="128"/>
 
@@ -174,5 +174,9 @@ Alternatively, you can import the module directly from a CDN without using impor
         }        
     </script>
   </body>
-</html>        
+</html>
 ```
+
+## Additional Resources
+
+[Anura Web Core SDK Documentation](https://docs.deepaffex.ai/web-core)

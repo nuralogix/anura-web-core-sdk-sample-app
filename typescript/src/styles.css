@@ -1,0 +1,68 @@
+.measurement-container {
+    width: 1280px;
+    height: 720px;
+}
+
+.logo-container {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.header {
+    align-content: center;
+    font-weight: 700;
+    font-size: large;
+    height: 128px;
+}
+
+/* General Styles */
+button, select {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    padding: 10px 15px;
+    border-radius: 6px;
+    border: 2px solid #007bff;
+    transition: all 0.3s ease-in-out;
+    margin-bottom: 20px;
+}
+
+/* Button Styles */
+button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:active {
+    background-color: #004085;
+    transform: scale(0.98);
+}
+
+/* Disabled Button */
+button:disabled {
+    background-color: #cccccc;
+    border-color: #999999;
+    color: #000000;
+    cursor: not-allowed;
+}
+
+/* Select Styles */
+select {
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    outline: none;
+}
+
+select:hover {
+    border-color: #0056b3;
+}
+
+select:focus {
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0, 91, 187, 0.5);
+}
