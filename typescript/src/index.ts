@@ -13,7 +13,8 @@ import {
   type MeasurementOptions,
   type Settings,
   type FaceTrackerStateType,
-  type Demographics
+  type Demographics,
+  type ChunkSent
 } from "@nuralogix.ai/anura-web-core-sdk";
 import helpers, { type CameraStatusChanged, SelectedCameraChanged} from "@nuralogix.ai/anura-web-core-sdk/helpers";
 import { VitalMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
@@ -199,6 +200,10 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
 
     measurement.on.constraintsUpdated = (feedback: ConstraintFeedback, status: ConstraintStatus) => {
       // console.log("Constraints Updated", feedback, status);
+    };
+
+    measurement.on.chunkSent = (chunk: ChunkSent) => {
+        // console.log('Chunk Sent', chunk);
     };
 
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {

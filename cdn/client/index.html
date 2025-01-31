@@ -227,6 +227,10 @@
             // console.log('Constraints Updated', feedback, status);
             }
 
+            measurement.on.chunkSent = (chunk) => {
+                // console.log('Chunk Sent', chunk);
+            };              
+
             measurement.on.facialLandmarksUpdated = (landmarks) => {
                 if(landmarks.face.detected) {
                     mask.draw(landmarks);
