@@ -17,10 +17,10 @@ sample apps.
 ## Getting Started
 
 To get started with a sample app:
+
 1. Navigate to the desired sample app directory (e.g., `typescript/`).
 2. Follow the instructions in the `README.md` within that directory to set up
 and run the sample app.
-
 
 ## License
 
@@ -28,7 +28,5 @@ See the `LICENSE` file for details.
 
 ## Contact
 
-For questions, issues, or support, please reach out to our product support team.
-
-Our support team is available to assist you with any inquiries regarding the
-Anura Web Core SDK and the sample applications.
+For questions, issues, or support, please contact to product support team via
+our Support Portal.
