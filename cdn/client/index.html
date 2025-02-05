@@ -99,22 +99,18 @@
             };
 
             const onCameraStatus = async (e) => {
-            const { isOpen } = e.detail;
-            if (isOpen) {
-                const { capabilities } = e.detail;
-                console.log({ capabilities });
+                const { isOpen } = e.detail;
+                if (isOpen) {
+                    const { capabilities } = e.detail;
+                    console.log({ capabilities });
+                }
+                isCameraOpen = isOpen;
+                if (isCameraOpen) {
+                    await measurement.setMediaStream(camera.cameraStream);
+                    const success = measurement.setObjectFit(mask.objectFit);
+                    if (success) measurement.loadMask(mask.getSvg());
+                }
             }
-            isCameraOpen = isOpen;
-            if (isCameraOpen) {
-                await measurement.setMediaStream(camera.cameraStream);
-                const success = measurement.setObjectFit(mask.objectFit);
-                if (success) {
-                    measurement.loadMask(mask.getSvg());
-                    await measurement.startTracking();
-                }            
-            }
-            // mediaElement.style.height = isCameraOpen ? '100%' : 'unset';
-            }        
             camera.addEventListener('selectedDeviceChanged', (onSelectedDeviceChanged));
             camera.addEventListener('cameraStatus', (onCameraStatus));
             const isPermissionGranted = await camera.requestPermission();
@@ -155,7 +151,6 @@
                     mask.setMaskVisibility(false);
                 } else {
                     const success = await camera.start(1280, 720);
-                    await measurement.startTracking();
                 }
             }
 
@@ -172,10 +167,11 @@
                 toggleMeasurementButton.addEventListener('click', async () => {
                     // You can optionally pass user data to the startMeasurement method
                     // Both userProfileId and partnerId are optional
-                    // const userData = {
+                    // const measurementOptions = {
                     //     userProfileId: 'userProfileId',
                     //     partnerId: 'partnerId',
                     // };
+                    disableButton('toggle-measurement', true);
                     await measurement.startMeasurement();
                 });
             }
@@ -196,13 +192,16 @@
             //   console.log('afterRESTCall', timestamp, actionId, status, error);
             // };
 
-            measurement.on.faceTrackerStateChanged = (state) => {
-            trackerState = state;
-            if (state === faceTrackerState.LOADED) {
-                console.log(measurement.getVersion());
-                disableButton('toggle-camera', false);
-            }
-            if (state === faceTrackerState.READY) disableButton('toggle-measurement', false);
+            measurement.on.faceTrackerStateChanged = async (state) => {
+                trackerState = state;
+                if (state === faceTrackerState.LOADED) {
+                    console.log(measurement.getVersion());
+                    disableButton('toggle-camera', false);
+                }
+                if (state === faceTrackerState.READY) {
+                    disableButton('toggle-measurement', false);
+                    await measurement.startTracking();
+                }
                 console.log('faceTrackerStateChanged', state);
             };
 
@@ -231,9 +230,9 @@
                 // console.log('Chunk Sent', chunk);
             };              
 
-            measurement.on.facialLandmarksUpdated = (landmarks) => {
-                if(landmarks.face.detected) {
-                    mask.draw(landmarks);
+            measurement.on.facialLandmarksUpdated = (drawables) => {
+                if(drawables.face.detected) {
+                    mask.draw(drawables);
                 } else {
                     console.log('No face detected');
                 }

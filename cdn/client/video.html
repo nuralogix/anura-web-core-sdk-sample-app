@@ -92,11 +92,7 @@
                     videoStream.videoElement.addEventListener('playing', async () => {
                         await measurement.setMediaStream(videoStream.mediaStream);
                         const success = measurement.setObjectFit(mask.objectFit);
-                        if (success) {
-                            measurement.loadMask(mask.getSvg());
-                            await measurement.startTracking();
-                        }
-                        // mediaElement.style.height = isVideoPlaying ? '100%' : 'unset';
+                        if (success) measurement.loadMask(mask.getSvg());
                     });
                     videoStream.videoElement.play();
                 },
@@ -152,10 +148,11 @@
                 toggleMeasurementButton.addEventListener('click', async () => {
                     // You can optionally pass user data to the startMeasurement method
                     // Both userProfileId and partnerId are optional
-                    // const userData = {
+                    // const measurementOptions = {
                     //     userProfileId: 'userProfileId',
                     //     partnerId: 'partnerId',
                     // };
+                    disableButton('toggle-measurement', true);
                     await measurement.startMeasurement();
                 });
             }
@@ -176,13 +173,16 @@
             //   console.log('afterRESTCall', timestamp, actionId, status, error);
             // };
 
-            measurement.on.faceTrackerStateChanged = (state) => {
+            measurement.on.faceTrackerStateChanged = async (state) => {
                 trackerState = state;
                 if (state === faceTrackerState.LOADED) {
                     console.log(measurement.getVersion());
                     disableButton('toggle-video', false);
                 }
-                if (state === faceTrackerState.READY) disableButton('toggle-measurement', false);
+                if (state === faceTrackerState.READY) {
+                    disableButton('toggle-measurement', false);
+                    await measurement.startTracking();
+                }
                 console.log('faceTrackerStateChanged', state);
             };
 
@@ -211,9 +211,9 @@
                 // console.log('Chunk Sent', chunk);
             };
 
-            measurement.on.facialLandmarksUpdated = (landmarks) => {
-                if(landmarks.face.detected) {
-                    mask.draw(landmarks);
+            measurement.on.facialLandmarksUpdated = (drawables) => {
+                if(drawables.face.detected) {
+                    mask.draw(drawables);
                 } else {
                     console.log('No face detected');
                 }

@@ -81,10 +81,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       if (isCameraOpen && camera.cameraStream) {
           await measurement.setMediaStream(camera.cameraStream);
           const success = measurement.setObjectFit(mask.objectFit);
-          if (success) {
-              measurement.loadMask(mask.getSvg());
-              await measurement.startTracking();
-          }
+          if (success) measurement.loadMask(mask.getSvg());
       }
     }
 
@@ -130,7 +127,6 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             mask.setMaskVisibility(false);
         } else {
             const success = await camera.start(1280, 720);
-            await measurement.startTracking();
         }
     }
 
@@ -151,6 +147,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             //   userProfileId: "userProfileId",
             //   partnerId: "partnerId",
             // };
+            disableButton('toggle-measurement', true);
             await measurement.startMeasurement();
         });
     }
@@ -171,13 +168,16 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         // console.log("After REST Call", timestamp, actionId, status, error);
     };
 
-    measurement.on.faceTrackerStateChanged = (state: FaceTrackerStateType) => {
+    measurement.on.faceTrackerStateChanged = async (state: FaceTrackerStateType) => {
       trackerState = state;
       if (state === faceTrackerState.LOADED) {
           console.log(measurement.getVersion());
           disableButton('toggle-camera', false);
       }
-      if (state === faceTrackerState.READY) disableButton('toggle-measurement', false);
+      if (state === faceTrackerState.READY) {
+        disableButton('toggle-measurement', false);
+        await measurement.startTracking();
+      }
       console.log('faceTrackerStateChanged', state);
     };
 

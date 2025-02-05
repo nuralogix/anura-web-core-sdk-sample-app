@@ -84,7 +84,7 @@ changes.
 - Great for quick experiments without setting up a full build pipeline.
 - Reduces friction when sharing code samples.
 
-### Using Import Maps
+### Using an Import Map
 
 You can use [importmap](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap)
 to reference the SDK:
