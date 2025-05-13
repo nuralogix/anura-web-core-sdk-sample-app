@@ -183,18 +183,20 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
 
     measurement.on.resultsReceived = (results: Results) => {
         const { points, resultsOrder, finalChunkNumber } = results;
+        const pointList = Object.keys(points);
         // Intermediate results
         if (resultsOrder < finalChunkNumber) {
             mask.setIntermediateResults(points);
-            const pointList = Object.keys(points);
-            const IntermediateResults: {[key: string]: string} = {};
-            if (pointList.includes('SNR')) IntermediateResults.SNR = points.SNR.value;
-            if (pointList.includes('HR_BPM')) IntermediateResults.HR_BPM = points.HR_BPM.value;
-            console.log('Intermediate results', IntermediateResults);
+            pointList.forEach(point => {
+            console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
+            });
         }
         // Final results
         if (resultsOrder === finalChunkNumber) {
             console.log('Final results', results);
+            pointList.forEach(point => {
+            console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+            });
         }
     }
 
