@@ -212,14 +212,14 @@
                 if (resultsOrder < finalChunkNumber) {
                     mask.setIntermediateResults(points);
                     pointList.forEach(point => {
-                    console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
+                        console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
                     });
                 }
                 // Final results
                 if (resultsOrder === finalChunkNumber) {
                     console.log('Final results', results);
                     pointList.forEach(point => {
-                    console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                        console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
                     });
                 }
             }
