@@ -17,7 +17,7 @@ import {
   type ChunkSent
 } from "@nuralogix.ai/anura-web-core-sdk";
 import helpers, { type CameraStatusChanged, SelectedCameraChanged} from "@nuralogix.ai/anura-web-core-sdk/helpers";
-import { VitalMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
+import { AnuraMask, type AnuraMaskSettings } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
 
 const { CameraController } = helpers;
 let trackerState: FaceTrackerStateType = faceTrackerState.ASSETS_NOT_DOWNLOADED;
@@ -44,7 +44,27 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             faceTrackerWorkers: false,
         }
     };
-    const mask = new VitalMask();
+    // Optional Anura Mask Settings
+    const anuraMaskSettings: AnuraMaskSettings = {
+        starFillColor: '#39cb3a',
+        starBorderColor: '#d1d1d1',
+        pulseRateColor: 'red',
+        pulseRateLabelColor: '#ffffff',
+        backgroundColor: '#ffffff',
+        countDownLabelColor: '#000000',
+        faceNotCenteredColor: '#fc6a0f',
+        /** must be > 0 and <= 1 */
+        diameter: 0.44,
+        /** must be > 0 and <= 1 */
+        sideHeight: 0.06,
+        /** Relative to the top of the container */
+        maskTopMargin: 10,
+        /** Relative to the bottom of the mask */
+        heartTopMargin: 30,
+        /** Relative to the bottom of the heart */
+        starsTopMargin: 20,
+    };
+    const mask = new AnuraMask(anuraMaskSettings);
     const measurement = await Measurement.init(settings);
     measurement.setSettings({
         logger: {

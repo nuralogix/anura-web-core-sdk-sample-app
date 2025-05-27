@@ -11,7 +11,7 @@
           "imports": {
             "@nuralogix.ai/anura-web-core-sdk": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk",
             "@nuralogix.ai/anura-web-core-sdk/helpers": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/helpers/index.min.mjs",
-            "@nuralogix.ai/anura-web-core-sdk/masks/vital": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/vital/index.mjs"
+            "@nuralogix.ai/anura-web-core-sdk/masks/anura": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/anura/index.mjs"
           }
         }
     </script>
@@ -41,15 +41,26 @@
     <div class="measurement-container">
         <div id="measurement"></div>
     </div>
+    <table class="table is-hidden" id="results-table">
+        <thead>
+          <tr>
+            <th>Point</th>
+            <th>Value</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
     <script type="module">
         import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
         import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
-        import { VitalMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
+        import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
         const { CameraController } = helpers;
         let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
         const mediaElement = document.getElementById('measurement');
         const cameraList = document.getElementById('camera-list');
+        const resultsTable = document.getElementById('results-table');        
         const toggleCameraButton = document.getElementById('toggle-camera');
         const toggleMeasurementButton = document.getElementById('toggle-measurement');
         if (mediaElement && mediaElement instanceof HTMLDivElement) {
@@ -70,7 +81,27 @@
                     faceTrackerWorkers: false,
                 }
             };
-            const mask = new VitalMask();
+            // Optional Anura Mask Settings
+            const anuraMaskSettings = {
+                starFillColor: '#39cb3a',
+                starBorderColor: '#d1d1d1',
+                pulseRateColor: 'red',
+                pulseRateLabelColor: '#ffffff',
+                backgroundColor: '#ffffff',
+                countDownLabelColor: '#000000',
+                faceNotCenteredColor: '#fc6a0f',
+                /** must be > 0 and <= 1 */
+                diameter: 0.44,
+                /** must be > 0 and <= 1 */
+                sideHeight: 0.06,
+                /** Relative to the top of the container */
+                maskTopMargin: 10,
+                /** Relative to the bottom of the mask */
+                heartTopMargin: 30,
+                /** Relative to the bottom of the heart */
+                starsTopMargin: 20,
+            };
+            const mask = new AnuraMask(anuraMaskSettings);
             const measurement = await Measurement.init(settings);
             measurement.setSettings({
                 logger: {
@@ -218,8 +249,18 @@
                 // Final results
                 if (resultsOrder === finalChunkNumber) {
                     console.log('Final results', results);
+                    resultsTable.classList.remove('is-hidden');
+                    const tbody = resultsTable.querySelector('tbody');
                     pointList.forEach(point => {
-                        console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                    const row = document.createElement('tr');
+                    const pointCell = document.createElement('td');
+                    pointCell.textContent = point;
+                    const valueCell = document.createElement('td');
+                    valueCell.textContent = points[point].value;
+                    row.appendChild(pointCell);
+                    row.appendChild(valueCell);
+                    tbody.appendChild(row);
+                    console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
                     });
                 }
             }
