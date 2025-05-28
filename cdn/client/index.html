@@ -53,9 +53,14 @@
     </table>
     <script type="module">
         import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
-        import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
+        import helpers, { CameraControllerEvents } from "@nuralogix.ai/anura-web-core-sdk/helpers";
         import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
         const { CameraController } = helpers;
+        const {
+            CAMERA_STATUS,
+            SELECTED_DEVICE_CHANGED,
+            MEDIA_DEVICE_LIST_CHANGED
+        } = CameraControllerEvents;
         let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
         const mediaElement = document.getElementById('measurement');
@@ -124,9 +129,23 @@
             const camera = CameraController.init();
             let deviceId = '';
             let isCameraOpen = false;
-            const onSelectedDeviceChanged = (e) => {
+            const onSelectedDeviceChanged = async (e) => {
                 const { deviceId } = e.detail;
                 console.log('Selected deviceId', deviceId);
+            };
+
+            const onMediaDeviceListChanged = async (e) => {
+                const { mediaDevices } = e.detail;
+                cameraList.innerHTML = ''; // Clears all options
+                const list = mediaDevices.map(mediaDevice => ({
+                    value: mediaDevice.device.deviceId, text: mediaDevice.device.label
+                }));
+                list.forEach(optionData => {
+                    const optionElement = document.createElement('option');
+                    optionElement.value = optionData.value;
+                    optionElement.textContent = optionData.text;
+                    cameraList.appendChild(optionElement);
+                });
             };
 
             const onCameraStatus = async (e) => {
@@ -142,21 +161,13 @@
                     if (success) measurement.loadMask(mask.getSvg());
                 }
             }
-            camera.addEventListener('selectedDeviceChanged', (onSelectedDeviceChanged));
-            camera.addEventListener('cameraStatus', (onCameraStatus));
+
+            camera.addEventListener(SELECTED_DEVICE_CHANGED, onSelectedDeviceChanged);
+            camera.addEventListener(MEDIA_DEVICE_LIST_CHANGED, onMediaDeviceListChanged);
+            camera.addEventListener(CAMERA_STATUS, onCameraStatus);
             const isPermissionGranted = await camera.requestPermission();
             if (isPermissionGranted && cameraList) {
                 await camera.list();
-                cameraList.innerHTML = ''; // Clears all options
-                const list = camera.mediaDevices.map(mediaDevice => ({
-                    value: mediaDevice.device.deviceId, text: mediaDevice.device.label
-                }));
-                list.forEach(optionData => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = optionData.value;
-                    optionElement.textContent = optionData.text;
-                    cameraList.appendChild(optionElement);
-                });
                 cameraList.addEventListener('change', (e) => {
                     camera.setDeviceId(e.target.value);
                 });

@@ -16,10 +16,20 @@ import {
   type Demographics,
   type ChunkSent
 } from "@nuralogix.ai/anura-web-core-sdk";
-import helpers, { type CameraStatusChanged, SelectedCameraChanged} from "@nuralogix.ai/anura-web-core-sdk/helpers";
+import helpers, {
+    CameraControllerEvents,
+    type CameraStatusChanged,
+    type SelectedCameraChanged,
+    type MediaDeviceListChanged
+} from "@nuralogix.ai/anura-web-core-sdk/helpers";
 import { AnuraMask, type AnuraMaskSettings } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
 
 const { CameraController } = helpers;
+const {
+    CAMERA_STATUS,
+    SELECTED_DEVICE_CHANGED,
+    MEDIA_DEVICE_LIST_CHANGED
+} = CameraControllerEvents;
 let trackerState: FaceTrackerStateType = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
 const mediaElement = document.getElementById('measurement') as HTMLDivElement;
@@ -86,11 +96,25 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
 
     const camera = CameraController.init();
     let isCameraOpen = false;
-    const onSelectedDeviceChanged = (e: SelectedCameraChanged) => {
+    const onSelectedDeviceChanged = async (e: SelectedCameraChanged) => {
         const { deviceId } = e.detail;
         console.log('Selected deviceId', deviceId);
     };
 
+    const onMediaDeviceListChanged = async (e: MediaDeviceListChanged) => {
+        const { mediaDevices } = e.detail;
+        cameraList.innerHTML = ''; // Clears all options
+        const list = mediaDevices.map(mediaDevice => ({
+            value: mediaDevice.device.deviceId, text: mediaDevice.device.label
+        }));
+        list.forEach(optionData => {
+            const optionElement = document.createElement('option');
+            optionElement.value = optionData.value;
+            optionElement.textContent = optionData.text;
+            cameraList.appendChild(optionElement);
+        });
+    };
+    
     const onCameraStatus = async (e: CameraStatusChanged) => {
       const { isOpen } = e.detail;
       if (isOpen) {
@@ -105,22 +129,13 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       }
     }
 
-    camera.addEventListener('selectedDeviceChanged', (onSelectedDeviceChanged as EventListener));
-    camera.addEventListener('cameraStatus', (onCameraStatus as unknown as EventListener));
+    camera.addEventListener(SELECTED_DEVICE_CHANGED, (onSelectedDeviceChanged as unknown as EventListener));
+    camera.addEventListener(MEDIA_DEVICE_LIST_CHANGED, (onMediaDeviceListChanged as unknown as EventListener));
+    camera.addEventListener(CAMERA_STATUS, (onCameraStatus as unknown as EventListener));
 
     const isPermissionGranted = await camera.requestPermission();
     if (isPermissionGranted && cameraList) {
         await camera.list();
-        cameraList.innerHTML = ''; // Clears all options
-        const list = camera.mediaDevices.map(mediaDevice => ({
-            value: mediaDevice.device.deviceId, text: mediaDevice.device.label
-        }));
-        list.forEach(optionData => {
-            const optionElement = document.createElement('option');
-            optionElement.value = optionData.value;
-            optionElement.textContent = optionData.text;
-            cameraList.appendChild(optionElement);
-        });
         cameraList.addEventListener('change', (e: Event) => {
             const target = e.target as HTMLSelectElement;
             if (target && target.value) camera.setDeviceId(target.value);
