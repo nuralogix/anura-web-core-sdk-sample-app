@@ -17,37 +17,60 @@
     </script>
     <style>
         .measurement-container {width: 720px; height: 1280px;}
+        #progress-container {
+            width: 80%;
+            max-width: 600px;
+            margin: 40px auto; /* vertical spacing + center horizontally */
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 25px;
+            background: linear-gradient(90deg, #4caf50, #81c784);
+            transition: width 0.3s ease;
+            box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);
+            border-radius: 10px 0 0 10px;
+        }
     </style>    
 </head>
 <body>
-    <section class="section">
-      <div class="is-flex mb-4">
+    <div id="app" class="is-hidden">
+        <section class="section">
+        <div class="is-flex mb-4">
+            <div>
+            <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+            </div>
+            <div class="is-align-content-center is-size-3 has-text-weight-medium">
+            Anura Web Core SDK
+            </div>
+        </div>
+        <hr>
         <div>
-          <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+            <button type="button" class="button" id="toggle-video" disabled>Play Video</button>
+            <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
         </div>
-        <div class="is-align-content-center is-size-3 has-text-weight-medium">
-          Anura Web Core SDK
+        </section>
+        <div class="measurement-container">
+            <div id="measurement"></div>
         </div>
-      </div>
-      <hr>
-      <div>
-        <button type="button" class="button" id="toggle-video" disabled>Play Video</button>
-        <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
-      </div>
-    </section>
-    <div class="measurement-container">
-        <div id="measurement"></div>
+        <table class="table is-hidden" id="results-table">
+            <thead>
+            <tr>
+                <th>Point</th>
+                <th>Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
     </div>
-    <table class="table is-hidden" id="results-table">
-        <thead>
-          <tr>
-            <th>Point</th>
-            <th>Value</th>
-          </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
     <script type="module">
         import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
         import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
@@ -168,9 +191,29 @@
                 });
             }
 
-            // measurement.on.bytesDownloaded = (bytes, url, done) => {
-            //   console.log(`bytes downloaded`, bytes, url, done);
-            // };
+            let percentDownloaded = 0;
+            let bytesDownloaded = 0;
+            let totalSize = 0;
+            const filesDownloaded = [];
+            measurement.on.bytesDownloaded = (bytes, uncompressedSize, url, done) => {
+                const file = filesDownloaded.find((file) => file.name === url);
+                if (file) {
+                    const diff = bytes - file.bytes;
+                    file.bytes += diff;
+                    bytesDownloaded += diff;
+                } else {
+                    bytesDownloaded += bytes;
+                    totalSize += uncompressedSize;
+                    filesDownloaded.push({ name: url, bytes });
+                }
+                const TOTAL_SIZE = filesDownloaded.length === 7 ? totalSize : 9_000_000;
+                percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
+                document.getElementById('progress-bar').style.width = `${percentDownloaded}%`;
+                if (percentDownloaded === 100) {
+                    document.getElementById('progress-container').classList.add('is-hidden');
+                    document.getElementById('app').classList.remove('is-hidden');
+                }
+            };
 
             // measurement.on.downloadError = (url, error) => {
             //   console.log(`download error`, url, error);

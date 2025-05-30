@@ -56,26 +56,31 @@ return `
     <title>Anura Web Core SDK - Typescript</title>
 </head>
 <body>
-    <section>
-        <div class="logo-container">
+    <div id="app" class="is-hidden">
+        <section>
+            <div class="logo-container">
+                <div>
+                    <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+                </div>
+                <div class="header">
+                    Anura Web Core SDK
+                </div>
+            </div>
+            <hr>
             <div>
-                <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+                <div>
+                    <select title="camera-select" id="camera-list"></select>
+                </div>
+                <button type="button" id="toggle-camera" disabled>Open</button>
+                <button type="button" id="toggle-measurement" disabled>Start Measurement</button>
             </div>
-            <div class="header">
-                Anura Web Core SDK
-            </div>
+        </section>
+        <div class="measurement-container">
+            <div id="measurement"></div>
         </div>
-        <hr>
-        <div>
-            <div>
-                <select title="camera-select" id="camera-list"></select>
-            </div>
-            <button type="button" id="toggle-camera" disabled>Open</button>
-            <button type="button" id="toggle-measurement" disabled>Start Measurement</button>
-        </div>
-    </section>
-    <div class="measurement-container">
-        <div id="measurement"></div>
+    </div>
+    <div id="progress-container">
+        <div id="progress-bar"></div>
     </div>
     <script type="module" src="${bundleFileName}"></script>
 </body>

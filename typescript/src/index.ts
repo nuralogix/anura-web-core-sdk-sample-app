@@ -187,8 +187,32 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         });
     }
 
-    measurement.on.bytesDownloaded = (bytes: number, url: string, done: boolean) => {
-      // console.log("Bytes downloaded", bytes, url, done);
+    measurement.on.bytesDownloaded = (bytes: number, uncompressedSize: number, url: string, done: boolean) => {
+      // console.log("Bytes downloaded", bytes, uncompressedSize, url, done);
+    };
+
+    let percentDownloaded = 0;
+    let bytesDownloaded = 0;
+    let totalSize = 0;
+    const filesDownloaded: {name: string, bytes: number}[] = [];
+    measurement.on.bytesDownloaded = (bytes: number, uncompressedSize: number, url: string, done: boolean) => {
+      const file = filesDownloaded.find((file) => file.name === url);
+      if (file) {
+        const diff = bytes - file.bytes;
+        file.bytes += diff;
+        bytesDownloaded += diff;
+      } else {
+        bytesDownloaded += bytes;
+        totalSize += uncompressedSize;
+        filesDownloaded.push({ name: url, bytes });
+      }
+      const TOTAL_SIZE = filesDownloaded.length === 7 ? totalSize : 9_000_000;
+      percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
+      document.getElementById('progress-bar')!.style.width = `${percentDownloaded}%`;
+      if (percentDownloaded === 100) {
+        document.getElementById('progress-container')!.classList.add('is-hidden');
+        document.getElementById('app')!.classList.remove('is-hidden');
+      }
     };
 
     measurement.on.downloadError = (url: string, error: unknown) => {
