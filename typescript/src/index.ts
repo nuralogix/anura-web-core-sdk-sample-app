@@ -52,6 +52,20 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             sdk: false,
             extractionWorker: false,
             faceTrackerWorkers: false,
+        },
+        constraintOverrides: {
+            minimumFps: 14,
+            boxWidth_pct: 100,
+            boxHeight_pct: 100,
+            checkBackLight: false,
+            checkCameraMovement: false,
+            checkCentered: true,
+            checkDistance: false,
+            checkEyebrowMovement: false,
+            checkFaceDirection: false,
+            checkLighting: false,
+            checkMinFps: true,
+            checkMovement: false
         }
     };
     // Optional Anura Mask Settings
@@ -186,10 +200,6 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             await measurement.startMeasurement();
         });
     }
-
-    measurement.on.bytesDownloaded = (bytes: number, uncompressedSize: number, url: string, done: boolean) => {
-      // console.log("Bytes downloaded", bytes, uncompressedSize, url, done);
-    };
 
     let percentDownloaded = 0;
     let bytesDownloaded = 0;
