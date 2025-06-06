@@ -4,6 +4,7 @@ import {
   Measurement,
   faceAttributeValue,
   faceTrackerState,
+  errorCategories,
   type ConstraintFeedback,
   type ConstraintStatus,
   type Drawables,
@@ -12,9 +13,10 @@ import {
   type MediaElementResizeEvent,
   type MeasurementOptions,
   type Settings,
-  type FaceTrackerStateType,
+  type FaceTrackerState,
   type Demographics,
-  type ChunkSent
+  type ChunkSent,
+  type ErrorCategories,
 } from "@nuralogix.ai/anura-web-core-sdk";
 import helpers, {
     CameraControllerEvents,
@@ -30,7 +32,7 @@ const {
     SELECTED_DEVICE_CHANGED,
     MEDIA_DEVICE_LIST_CHANGED
 } = CameraControllerEvents;
-let trackerState: FaceTrackerStateType = faceTrackerState.ASSETS_NOT_DOWNLOADED;
+let trackerState: FaceTrackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
 const mediaElement = document.getElementById('measurement') as HTMLDivElement;
 const cameraList = document.getElementById('camera-list') as HTMLSelectElement;
@@ -237,7 +239,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         // console.log("After REST Call", timestamp, actionId, status, error);
     };
 
-    measurement.on.faceTrackerStateChanged = async (state: FaceTrackerStateType) => {
+    measurement.on.faceTrackerStateChanged = async (state: FaceTrackerState) => {
       trackerState = state;
       if (state === faceTrackerState.LOADED) {
           console.log(measurement.getVersion());
@@ -275,6 +277,12 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
 
     measurement.on.chunkSent = (chunk: ChunkSent) => {
         // console.log('Chunk Sent', chunk);
+    };
+
+    measurement.on.error = (category: ErrorCategories, data: unknown) => {
+        if (category === errorCategories.COLLECTOR) {
+            console.log('Collector Error:', data);
+        }
     };
 
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {

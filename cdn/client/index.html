@@ -75,7 +75,7 @@
         <div id="progress-bar"></div>
     </div>
     <script type="module">
-        import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
+        import { Measurement, faceAttributeValue, faceTrackerState, errorCategories } from '@nuralogix.ai/anura-web-core-sdk';
         import helpers, { CameraControllerEvents } from "@nuralogix.ai/anura-web-core-sdk/helpers";
         import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
         const { CameraController } = helpers;
@@ -339,7 +339,13 @@
 
             measurement.on.chunkSent = (chunk) => {
                 // console.log('Chunk Sent', chunk);
-            };              
+            };
+
+            measurement.on.error = (category, data) => {
+                if (category === errorCategories.COLLECTOR) {
+                    console.log('Collector Error:', data);
+                }
+            };
 
             measurement.on.facialLandmarksUpdated = (drawables) => {
                 if(drawables.face.detected) {
