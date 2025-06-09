@@ -75,7 +75,14 @@
         <div id="progress-bar"></div>
     </div>
     <script type="module">
-        import { Measurement, faceAttributeValue, faceTrackerState, errorCategories } from '@nuralogix.ai/anura-web-core-sdk';
+        import {
+            Measurement,
+            faceAttributeValue,
+            faceTrackerState,
+            errorCategories,
+            constraintFeedback,
+            constraintStatus,  
+        } from "@nuralogix.ai/anura-web-core-sdk";
         import helpers, { CameraControllerEvents } from "@nuralogix.ai/anura-web-core-sdk/helpers";
         import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
         const { CameraController } = helpers;
@@ -279,10 +286,6 @@
                 }
             };
 
-            // measurement.on.downloadError = (url, error) => {
-            //   console.log(`download error`, url, error);
-            // };
-
             // measurement.on.beforeRESTCall = (timestamp, actionId) => {
             //   console.log('beforeRESTCall', timestamp, actionId);
             // };
@@ -331,11 +334,13 @@
                     console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
                     });
                 }
-            }
+            };
 
             measurement.on.constraintsUpdated = (feedback, status) => {
-            // console.log('Constraints Updated', feedback, status);
-            }
+                // if (feedback === constraintFeedback.FACE_FAR && status === constraintStatus.ERROR) {
+                //     console.log('Too far from camera, move closer to the camera.');
+                // }
+            };
 
             measurement.on.chunkSent = (chunk) => {
                 // console.log('Chunk Sent', chunk);
@@ -344,6 +349,9 @@
             measurement.on.error = (category, data) => {
                 if (category === errorCategories.COLLECTOR) {
                     console.log('Collector Error:', data);
+                }
+                if (category === errorCategories.ASSET_DOWNLOAD) {
+                    console.log('Download Error:', data);
                 }
             };
 

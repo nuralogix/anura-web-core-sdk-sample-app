@@ -5,6 +5,8 @@ import {
   faceAttributeValue,
   faceTrackerState,
   errorCategories,
+  constraintFeedback,
+  constraintStatus,  
   type ConstraintFeedback,
   type ConstraintStatus,
   type Drawables,
@@ -227,10 +229,6 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       }
     };
 
-    measurement.on.downloadError = (url: string, error: unknown) => {
-        // console.log("Download error", url, error);
-    };
-
     measurement.on.beforeRESTCall = (timestamp: IsoDate, actionId: number) => {
       // console.log("Before REST Call", timestamp, actionId);
     };
@@ -269,10 +267,12 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
                 console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
             });
         }
-    }
+    };
 
     measurement.on.constraintsUpdated = (feedback: ConstraintFeedback, status: ConstraintStatus) => {
-      // console.log("Constraints Updated", feedback, status);
+        // if (feedback === constraintFeedback.FACE_FAR && status === constraintStatus.ERROR) {
+        //     console.log('Too far from camera, move closer to the camera.');
+        // }
     };
 
     measurement.on.chunkSent = (chunk: ChunkSent) => {
@@ -283,6 +283,9 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         if (category === errorCategories.COLLECTOR) {
             console.log('Collector Error:', data);
         }
+        if (category === errorCategories.ASSET_DOWNLOAD) {
+            console.log('Download Error:', data);
+        }
     };
 
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {
@@ -291,12 +294,12 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         } else {
             console.log('No face detected');
         }
-    }
+    };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
         mask.resize(event.detail);
         console.log('mediaElementResize', event);
-    }
+    };
     
     const apiUrl = 'http://localhost:7000/api';
 
