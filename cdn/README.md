@@ -101,7 +101,7 @@ to reference the SDK:
           "imports": {
             "@nuralogix.ai/anura-web-core-sdk": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk",
             "@nuralogix.ai/anura-web-core-sdk/helpers": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/helpers/index.min.mjs",
-            "@nuralogix.ai/anura-web-core-sdk/masks/vital": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/vital/index.mjs"
+            "@nuralogix.ai/anura-web-core-sdk/masks/anura": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/anura/index.mjs"
           }
         }
     </script>
@@ -116,7 +116,7 @@ to reference the SDK:
     <script type="module">
         import { Measurement, faceAttributeValue, faceTrackerState } from '@nuralogix.ai/anura-web-core-sdk';
         import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
-        import { VitalMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
+        import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/vital";
 
         const { CameraController } = helpers;
         const camera = CameraController.init();
@@ -132,7 +132,27 @@ to reference the SDK:
                 metrics: false
             };
             const measurement = await Measurement.init(settings);
-            const mask = new VitalMask();
+            // Optional Anura Mask Settings
+            const anuraMaskSettings = {
+                starFillColor: '#39cb3a',
+                starBorderColor: '#d1d1d1',
+                pulseRateColor: 'red',
+                pulseRateLabelColor: '#ffffff',
+                backgroundColor: '#ffffff',
+                countDownLabelColor: '#000000',
+                faceNotCenteredColor: '#fc6a0f',
+                /** must be > 0 and <= 1 */
+                diameter: 0.44,
+                /** must be > 0 and <= 1 */
+                sideHeight: 0.06,
+                /** Relative to the top of the container */
+                maskTopMargin: 10,
+                /** Relative to the bottom of the mask */
+                heartTopMargin: 30,
+                /** Relative to the bottom of the heart */
+                starsTopMargin: 20,
+            };
+            const mask = new AnuraMask(anuraMaskSettings);
         }
     </script>
   </body>
@@ -162,7 +182,7 @@ import maps:
     <script type="module">
         import { Measurement, faceAttributeValue, faceTrackerState } from 'https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/index.min.mjs';
         import helpers from "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/helpers/index.min.mjs";
-        import { VitalMask } from "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/vital/index.mjs";
+        import { AnuraMask } from "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/anura/index.mjs";
 
         const { CameraController } = helpers;
         const camera = CameraController.init();
@@ -178,7 +198,7 @@ import maps:
                 metrics: false
             };
             const measurement = await Measurement.init(settings);
-            const mask = new VitalMask();
+            const mask = new AnuraMask();
         }
     </script>
   </body>
