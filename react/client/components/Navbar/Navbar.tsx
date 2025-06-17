@@ -31,7 +31,7 @@ const Navbar: React.FC = () => {
   return (
     <header {...stylex.props(styles.header)}>
       {/* TODO replace with right logo */}
-      <div {...stylex.props(styles.title)}>WMS 2.0</div>
+      <div {...stylex.props(styles.title)}>WMS 2.0 Sample App</div>
       <div {...stylex.props(styles.right)}>
         {/* TODO replace with toggle */}
         <Button variant="outline" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
