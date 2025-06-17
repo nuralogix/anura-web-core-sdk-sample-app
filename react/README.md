@@ -1,10 +1,13 @@
-# Web Measurement Service 2.0
+[Back to Main README](../README.md)
 
+# Anura Web Core SDK - React Sample Application
 
 ## Create environment variables
+
 Create two env files. One for production and one for development.
 
 .prod.env
+
 ```
 NODE_ENV=production
 API_URL=api.deepaffex.ai
@@ -13,6 +16,7 @@ LICENSE_KEY=
 ```
 
 .dev.env
+
 ```
 NODE_ENV=development
 API_URL=api.deepaffex.ai
@@ -35,7 +39,7 @@ yarn serve:dev
 
 ## Run in production mode
 
-``` bash
+```bash
 yarn build
 yarn serve:prod
 ```
