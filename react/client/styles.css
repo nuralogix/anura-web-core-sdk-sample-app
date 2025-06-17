@@ -1,0 +1,8 @@
+@import '@nuralogix.ai/web-ui/lib/stylex.css';
+@import '@nuralogix.ai/web-ui/lib/themes/dark/stylex.css';
+@import '@nuralogix.ai/web-ui/lib/themes/light/stylex.css';
+
+body,
+#root {
+  margin: 0;
+}
