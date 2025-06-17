@@ -1,0 +1,24 @@
+{
+  "BTN_START_MEASUREMENT": "Démarrer la mesure",
+  "CANCEL": "Annuler",
+  "ERR_FACE_NONE": "Veuillez garder votre visage centré dans le contour pendant toute la mesure",
+  "ERROR_TAB_SWITCHED_OR_WINDOW_MINIMIZED": "La mesure a échoué car l’onglet a été changé ou la fenêtre du navigateur a été minimisée. Veuillez vous assurer que l’onglet reste ouvert et actif.",
+  "KIOSK_HELP_CAMERA": "Veuillez faire face à l'appareil photo et positionner votre visage dans le cercle pendant toute la durée de la mesure.",
+  "KIOSK_HELP_ACCESSORIES": "Veuillez retirer tous les accessoires de votre visage avant la mesure, par exemple des lunettes, un chapeau ou le maquillage.",
+  "KIOSK_HELP_STAY": "Lorsque la mesure a commencé, gardez la même position pendant 30 secondes, jusqu'à la fin de l'opération.",
+  "HELP_TITLE": "Aide",
+  "NO_DEVICES_FOUND": "Aucun appareil détecté",
+  "STOP_CAMERA": "Arrêter la caméra",
+  "WEB_BTN_SELECT_CAMERA": "Sélectionner une caméra pour commencer",
+  "WEB_BTN_START_CAMERA": "Démarrer la caméra",
+  "WEB_CAMERA_START_ERROR": "Impossible de démarrer la caméra. Veuillez vous assurer que la caméra est connectée et qu’elle n’est pas utilisée par une autre application.",
+  "WEB_CAMERA_PERMISSION_REQUIRED_TITLE": "Autorisation requise pour utiliser la caméra",
+  "WEB_PLEASE_WAIT": "Veuillez patienter, la mesure va bientôt commencer…",
+
+  "WEB_MEASURE_INSTRUCTIONS_NO_FACE": "Veuillez centrer votre visage dans le cercle",
+  "WARNING_CONSTRAINT_GAZE": "Veuillez regarder directement l'appareil photo",
+  "WARNING_CONSTRAINT_DISTANCE": "Votre visage est trop éloigné. Essayez de vous rapprocher de la caméra",
+  "PLEASE_HOLD_STILL": "Veuillez rester immobile",
+  "WAITING_FOR_RESULTS": "Dans l’attente des résultats",
+  "ERR_MSG_SNR": "Le mesure du flux sanguin n'est pas fiable.\nVeuillez rester immobile et ajuster l'éclairage afin que la lumière soit uniformément répartie sur votre visage"
+}
