@@ -1,6 +1,45 @@
+body {
+    margin:0;
+    height: 100vh;
+    overflow: hidden;
+}
 .measurement-container {
-    width: 1280px;
-    height: 720px;
+    background-color: white;
+    flex-grow: 1;
+    display: flex; 
+    flex-direction: column;
+    overflow: hidden;
+    container-type: size;
+    box-sizing: border-box;
+}
+
+#measurement {
+    flex-grow: 1;
+    position: relative;
+    overflow: hidden;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* LANDSCAPE: enforce 16:9 aspect ratio */
+@container (min-aspect-ratio: 1 / 1) {
+    #measurement {
+        /* 100% wide unless that results in a width wider than 16:9 */
+        /* Clamp the width so it doesn't exceed container's height × (16 / 9)*/
+        max-width: calc(100cqh * 16 / 9);
+    }
+}
+
+/* PORTRAIT: allow full width — no max-width clamp */
+@container (max-aspect-ratio: 1 / 1) {
+    #measurement {
+        max-width: none;
+    }
+}
+#app {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .logo-container {
@@ -88,5 +127,5 @@ select:focus {
 }
 
 .is-hidden {
-    display: none;
+    display: none !important;
 }

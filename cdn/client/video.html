@@ -16,7 +16,44 @@
         }
     </script>
     <style>
-        .measurement-container {width: 720px; height: 1280px;}
+        .measurement-container {
+            background-color: white;
+            flex-grow: 1;
+            display: flex; 
+            flex-direction: column;
+            overflow: hidden;
+            container-type: size;
+            box-sizing: border-box;
+        }
+
+        #measurement {
+            flex-grow: 1;
+            position: relative;
+            overflow: hidden;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        /* LANDSCAPE: enforce 9:16 aspect ratio */
+        @container (min-aspect-ratio: 1 / 1) {
+            #measurement {
+            /* 100% wide unless that results in a width wider than 9:16 */
+            /* Clamp the width so it doesn't exceed container's height × (9 / 16)*/
+            max-width: calc(100cqh * 9 / 16);
+            }
+        }
+
+        /* PORTRAIT: allow full width — no max-width clamp */
+        @container (max-aspect-ratio: 1 / 1) {
+            #measurement {
+            max-width: none;
+            }
+        }
+        #app {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
         #progress-container {
             width: 80%;
             max-width: 600px;
@@ -39,21 +76,21 @@
 </head>
 <body>
     <div id="app" class="is-hidden">
-        <section class="section">
-        <div class="is-flex mb-4">
+        <div class="section">
+            <div class="is-flex mb-4">
+                <div>
+                <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
+                </div>
+                <div class="is-align-content-center is-size-3 has-text-weight-medium">
+                Anura Web Core SDK
+                </div>
+            </div>
+            <hr>
             <div>
-            <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
-            </div>
-            <div class="is-align-content-center is-size-3 has-text-weight-medium">
-            Anura Web Core SDK
+                <button type="button" class="button" id="toggle-video" disabled>Play Video</button>
+                <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
             </div>
         </div>
-        <hr>
-        <div>
-            <button type="button" class="button" id="toggle-video" disabled>Play Video</button>
-            <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
-        </div>
-        </section>
         <div class="measurement-container">
             <div id="measurement"></div>
         </div>
@@ -78,7 +115,9 @@
             faceTrackerState,
             errorCategories,
             constraintFeedback,
-            constraintStatus,  
+            constraintStatus,
+            realtimeResultErrors,
+            realtimeResultNotes,
         } from "@nuralogix.ai/anura-web-core-sdk";
         import helpers from "@nuralogix.ai/anura-web-core-sdk/helpers";
         import { TeleMask } from "@nuralogix.ai/anura-web-core-sdk/masks/tele";
@@ -258,8 +297,46 @@
             };
 
             measurement.on.resultsReceived = results => {
-                const { points, resultsOrder, finalChunkNumber } = results;
+                const { points, errors, resultsOrder, finalChunkNumber } = results;
                 const pointList = Object.keys(points);
+                for (const key of pointList) {
+                    const { notes } = points[key];
+                    notes.forEach(note => {
+                    switch (note) {
+                        case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+                        break;
+                        case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+                        break;
+                        case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+                        break;
+                        case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+                        break;
+                        case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+                        break;
+                        case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+                        break;
+                        default:
+                        console.log(`Note for point ${key}: ${note}`);
+                        break;
+                    }
+                    });
+                }
+                switch (errors.code) {
+                    case 'OK':
+                    break;
+                    case realtimeResultErrors.WORKER_ERROR:
+                    console.log('Worker Error:', errors.errors);
+                    break;
+                    case realtimeResultErrors.ANALYSIS_ERROR:
+                    console.log('Analysis Error:', errors.errors);
+                    break;
+                    case realtimeResultErrors.LIVENESS_ERROR:
+                    console.log('Liveness Error:', errors.errors);
+                    break;
+                    default:
+                    console.log('Error:', errors.code, errors.errors);
+                    break;
+                }
                 // Intermediate results
                 if (resultsOrder < finalChunkNumber) {
                     mask.setIntermediateResults(points);
@@ -302,6 +379,17 @@
                 }
                 if (category === errorCategories.ASSET_DOWNLOAD) {
                     console.log('Download Error:', data);
+                }
+                if (category === errorCategories.WEB_SOCKET) {
+                    if (data.type === 'DISCONNECTED') {
+                    const { code, reason, wasClean } = data;
+                        if (!wasClean) {
+                            console.error('WebSocket Disconnected unexpectedly:', { code, reason });
+                        }
+                    } else if (data.type === 'ERROR') {
+                        const { event } = data;
+                        console.log('WebSocket Error:', event);
+                    }
                 }
             };
 

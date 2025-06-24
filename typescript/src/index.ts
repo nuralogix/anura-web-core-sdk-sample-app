@@ -6,7 +6,9 @@ import {
   faceTrackerState,
   errorCategories,
   constraintFeedback,
-  constraintStatus,  
+  constraintStatus,
+  realtimeResultErrors,
+  realtimeResultNotes,
   type ConstraintFeedback,
   type ConstraintStatus,
   type Drawables,
@@ -19,6 +21,8 @@ import {
   type Demographics,
   type ChunkSent,
   type ErrorCategories,
+  type DfxPointId,
+  type WebSocketError,  
 } from "@nuralogix.ai/anura-web-core-sdk";
 import helpers, {
     CameraControllerEvents,
@@ -82,15 +86,11 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         countDownLabelColor: '#000000',
         faceNotCenteredColor: '#fc6a0f',
         /** must be > 0 and <= 1 */
-        diameter: 0.44,
+        diameter: 0.8,
         /** must be > 0 and <= 1 */
-        sideHeight: 0.06,
-        /** Relative to the top of the container */
-        maskTopMargin: 10,
-        /** Relative to the bottom of the mask */
-        heartTopMargin: 30,
-        /** Relative to the bottom of the heart */
-        starsTopMargin: 20,
+        topMargin: 0.06,
+        /** must be > 0 and <= 1 */
+        bottomMargin: 0.02,
     };
     const mask = new AnuraMask(anuraMaskSettings);
     const measurement = await Measurement.init(settings);
@@ -251,21 +251,59 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     };
 
     measurement.on.resultsReceived = (results: Results) => {
-        const { points, resultsOrder, finalChunkNumber } = results;
-        const pointList = Object.keys(points);
+        const { points, errors, resultsOrder, finalChunkNumber } = results;
+            const pointList = Object.keys(points) as DfxPointId[];
+            for (const key of pointList) {
+                const { notes } = points[key]!;
+                notes.forEach(note => {
+                    switch (note) {
+                        case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+                            break;
+                        case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+                            break;
+                        case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+                            break;
+                        case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+                            break;
+                        case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+                            break;
+                        case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+                            break;
+                        default:
+                            console.log(`Note for point ${key}: ${note}`);
+                            break;
+                    }
+                });
+            }
+            switch (errors.code) {
+                case 'OK':
+                    break;
+                case realtimeResultErrors.WORKER_ERROR:
+                    console.log('Worker Error:', errors.errors);
+                    break;
+                case realtimeResultErrors.ANALYSIS_ERROR:
+                    console.log('Analysis Error:', errors.errors);
+                    break;
+                case realtimeResultErrors.LIVENESS_ERROR:
+                    console.log('Liveness Error:', errors.errors);
+                    break;
+                default:
+                    console.log('Error:', errors.code, errors.errors);
+                    break;
+            }
         // Intermediate results
         if (resultsOrder < finalChunkNumber) {
             mask.setIntermediateResults(points);
-            pointList.forEach(point => {
-                console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
-            });
+            for (const key of pointList) {
+                console.log(`${resultsOrder} [Intermediate result: ${key}] ${points[key]!.value}`);
+            }
         }
         // Final results
         if (resultsOrder === finalChunkNumber) {
             console.log('Final results', results);
-            pointList.forEach(point => {
-                console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
-            });
+            for (const key of pointList) {
+                console.log(`${key} - value: ${points[key]!.value}, dial:`, points[key]!.dial);
+            }
         }
     };
 
@@ -279,12 +317,24 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         // console.log('Chunk Sent', chunk);
     };
 
-    measurement.on.error = (category: ErrorCategories, data: unknown) => {
+    measurement.on.error = (category: ErrorCategories, data: unknown | WebSocketError) => {
         if (category === errorCategories.COLLECTOR) {
             console.log('Collector Error:', data);
         }
         if (category === errorCategories.ASSET_DOWNLOAD) {
             console.log('Download Error:', data);
+        }
+        if (category === errorCategories.WEB_SOCKET) {
+            const payload = data as WebSocketError;
+            if (payload.type === 'DISCONNECTED') {
+                const { code, reason, wasClean } = payload;
+                if (!wasClean) {
+                    console.error('WebSocket Disconnected unexpectedly:', { code, reason });
+                }
+            } else if (payload.type === 'ERROR') {
+                const { event } = payload;
+                console.log('WebSocket Error:', event);
+            }
         }
     };
 
@@ -297,7 +347,26 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
-        mask.resize(event.detail);
+        // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
+        // |--------|-------------|--------------------|-----------------------------------------------------|
+        // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
+        // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
+        // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
+        // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
+        // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
+        // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
+
+        const { detail } = event;
+        const { isPortrait, aspectRatio } = detail;
+        const partialSettings: Partial<AnuraMaskSettings> = {
+            diameter: 0.8,
+        };
+        // You can optionally pass partialSettings to adjust the mask
+        // settings based on the aspect ratio, orientation or other conditions
+        if (isPortrait && aspectRatio < 0.5) {
+            partialSettings.diameter = 0.81;
+        }
+        mask.resize(detail, partialSettings);
         console.log('mediaElementResize', event);
     };
     

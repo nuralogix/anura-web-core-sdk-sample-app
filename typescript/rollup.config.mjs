@@ -57,7 +57,7 @@ return `
 </head>
 <body>
     <div id="app" class="is-hidden">
-        <section>
+        <div>
             <div class="logo-container">
                 <div>
                     <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
@@ -74,7 +74,7 @@ return `
                 <button type="button" id="toggle-camera" disabled>Open</button>
                 <button type="button" id="toggle-measurement" disabled>Start Measurement</button>
             </div>
-        </section>
+        </div>
         <div class="measurement-container">
             <div id="measurement"></div>
         </div>
