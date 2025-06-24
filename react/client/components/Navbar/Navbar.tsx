@@ -6,7 +6,6 @@ import { Button } from '@nuralogix.ai/web-ui';
 
 const styles = stylex.create({
   header: {
-    backgroundColor: '#f0f0f0', // light grey
     padding: '1rem',
     display: 'flex',
     alignItems: 'center',
@@ -31,7 +30,7 @@ const Navbar: React.FC = () => {
   return (
     <header {...stylex.props(styles.header)}>
       {/* TODO replace with right logo */}
-      <div {...stylex.props(styles.title)}>WMS 2.0 Sample App</div>
+      <div {...stylex.props(styles.title)}>Anura Web Sample App</div>
       <div {...stylex.props(styles.right)}>
         {/* TODO replace with toggle */}
         <Button variant="outline" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>

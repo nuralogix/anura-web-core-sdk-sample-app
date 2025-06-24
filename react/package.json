@@ -64,9 +64,9 @@
     "typescript-eslint": "^8.25.0"
   },
   "dependencies": {
-    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-alpha.19",
+    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-alpha.21",
     "@nuralogix.ai/dfx-api-client": "^1.0.72",
-    "@nuralogix.ai/web-ui": "^0.1.0-alpha.7",
+    "@nuralogix.ai/web-ui": "^0.1.0-alpha.9",
     "@stylexjs/stylex": "0.9.3",
     "compression": "^1.8.0",
     "cors": "^2.8.5",

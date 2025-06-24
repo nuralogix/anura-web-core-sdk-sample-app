@@ -12,10 +12,14 @@ import {
   type FaceTrackerState,
   type Demographics,
   type ChunkSent,
+  type DfxPointId,
+  type WebSocketError,
   ErrorCategories,
   errorCategories,
   constraintFeedback,
   constraintStatus,
+  realtimeResultErrors,
+  realtimeResultNotes,
 } from '@nuralogix.ai/anura-web-core-sdk';
 import { AnuraMask, type AnuraMaskSettings } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
 import { proxy } from 'valtio';
@@ -78,15 +82,11 @@ const anuraMaskSettings: AnuraMaskSettings = {
   countDownLabelColor: '#000000',
   faceNotCenteredColor: '#fc6a0f',
   /** must be > 0 and <= 1 */
-  diameter: 0.44,
+  diameter: 0.8,
   /** must be > 0 and <= 1 */
-  sideHeight: 0.06,
-  /** Relative to the top of the container */
-  maskTopMargin: 10,
-  /** Relative to the bottom of the mask */
-  heartTopMargin: 30,
-  /** Relative to the bottom of the heart */
-  starsTopMargin: 20,
+  topMargin: 0.06,
+  /** must be > 0 and <= 1 */
+  bottomMargin: 0.02,
 };
 const mask = new AnuraMask(anuraMaskSettings);
 let measurement: Measurement | null = null;
@@ -136,12 +136,29 @@ const measurementState: MeasurementState = proxy({
       // console.log("Bytes downloaded", bytes, url, done, bytesDownloaded, measurementState.percentDownloaded);
     };
 
-    measurement.on.error = (category: ErrorCategories, data: unknown) => {
+    measurement.on.error = (category: ErrorCategories, data: unknown | WebSocketError) => {
       if (category === errorCategories.COLLECTOR) {
         loggerState.addLog(logMessages.COLLECTOR_ERROR, logCategory.collector, data);
       }
       if (category === errorCategories.ASSET_DOWNLOAD) {
         // console.log(errors.ERROR_DOWNLOADING_ASSETS, url, error);
+      }
+      // TODO: handle websocket errors
+      if (category === errorCategories.WEB_SOCKET) {
+        const payload = data as WebSocketError;
+        if (payload.type === 'DISCONNECTED') {
+          // The close event is fired when a connection with a WebSocket is closed.
+          // A clean disconnection is not an error, but an expected event.
+          const { code, reason, wasClean } = payload;
+          if (!wasClean) {
+            // console.error('WebSocket Disconnected unexpectedly:', { code, reason });
+          }
+        } else if (payload.type === 'ERROR') {
+          // The error event is fired when a connection with a WebSocket
+          // has been closed due to an error (some data couldn't be sent for example).
+          const { event } = payload;
+          // console.log('WebSocket Error:', event);
+        }
       }
     };
 
@@ -187,13 +204,49 @@ const measurementState: MeasurementState = proxy({
     };
 
     measurement.on.resultsReceived = (results: Results) => {
-      // console.log('result code: ', results.errors.code);
       measurementState.results.push(results);
       const { points, resultsOrder, finalChunkNumber, errors } = results;
-
-      if (results.errors.code !== 'OK') {
-        // TODO handle errors
+      // TODO: handle errors
+      const pointList = Object.keys(points) as DfxPointId[];
+      for (const key of pointList) {
+        const { notes } = points[key]!;
+        notes.forEach(note => {
+          switch (note) {
+            case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+              break;
+            case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+              break;
+            case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+              break;
+            case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+              break;
+            case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+              break;
+            case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+              break;
+            default:
+              // console.log(`Note for point ${key}: ${note}`);
+              break;
+          }
+        });
       }
+      switch (errors.code) {
+        case 'OK':
+          break;
+        case realtimeResultErrors.WORKER_ERROR:
+          // console.log('Worker Error:', errors.errors);
+          break;
+        case realtimeResultErrors.ANALYSIS_ERROR:
+          // console.log('Analysis Error:', errors.errors);
+          break;
+        case realtimeResultErrors.LIVENESS_ERROR:
+          // console.log('Liveness Error:', errors.errors);
+          break;
+        default:
+          // console.log('Error:', errors.code, errors.errors);
+          break;
+      }
+
       if (shouldCancelForLowSNR(results)) {
         measurementState.stopMeasurement();
         notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
@@ -261,10 +314,27 @@ const measurementState: MeasurementState = proxy({
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
-      // TODO add logic like below from telemask in sdk
-      // const { mediaElementSize, videoElementSize, frameInfo } = event;
-      // const { width, height} = mediaElementSize; // width and height of container in px
-      mask.resize(event.detail);
+      // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
+      // |--------|-------------|--------------------|-----------------------------------------------------|
+      // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
+      // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
+      // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
+      // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
+      // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
+      // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
+
+      const { detail } = event;
+      // const { isPortrait, aspectRatio } = detail;
+      // const partialSettings: Partial<AnuraMaskSettings> = {
+      //   diameter: 0.8,
+      // };
+      // You can optionally pass partialSettings to adjust the mask
+      // settings based on the aspect ratio, orientation or other conditions
+      // if (isPortrait && aspectRatio < 0.5) {
+      //     partialSettings.diameter = 0.81;
+      // }
+      // mask.resize(detail, partialSettings);
+      mask.resize(detail);
       loggerState.addLog(logMessages.MEDIA_ELEMENT_RESIZED, logCategory.measurement, event);
     };
   },

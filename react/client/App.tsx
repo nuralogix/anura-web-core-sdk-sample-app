@@ -8,6 +8,17 @@ import Notification from './components/Notification';
 import { LanguageInitializer } from './language/LanguageInitializer';
 import Navbar from './components/Navbar/Navbar';
 import { useSnapshot } from 'valtio';
+import * as stylex from '@stylexjs/stylex';
+
+const styles = stylex.create({
+  wrapper: {
+    height: '100%',
+    margin: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+});
 
 const App = () => {
   const { theme } = useSnapshot(state.general);
@@ -21,10 +32,12 @@ const App = () => {
   return (
     <LanguageInitializer>
       <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-        <Navbar />
-        <Container>
-          <AppRouter />
-          <Notification />
+          <Container>
+            <div {...stylex.props(styles.wrapper)}>
+              <Navbar />
+              <AppRouter />
+              <Notification />
+            </div>
         </Container>
       </ThemeProvider>
     </LanguageInitializer>

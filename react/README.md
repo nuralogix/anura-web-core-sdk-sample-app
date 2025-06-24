@@ -44,6 +44,3 @@ yarn build
 yarn serve:prod
 ```
 
-## Prepare GIT hook to automatically add ticket type and ticket ID to commit messages
-
-Copy wms/prepare-commit-msg.txt to wms/.git/hooks WITHOUT the .txt extension

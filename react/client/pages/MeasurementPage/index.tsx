@@ -1,22 +1,26 @@
 import CameraSelector from '../../components/CameraSelector';
-import CameraToggle from '../../components/CameraToggle';
 import Measurement from '../../components/Measurement';
-import ViewResults from '../../components/ViewResults';
 import HelpPopover from '../../components/HelpPopover';
 import { useSnapshot } from 'valtio';
 import state from '../../state';
 import { faceTrackerState as trackingState } from '@nuralogix.ai/anura-web-core-sdk';
-import { Button, Loading } from '@nuralogix.ai/web-ui';
+import { Button } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
 
 const styles = stylex.create({
+  wrapper: {
+    flexGrow: 1,
+    display: 'flex',
+    flexDirection: 'column',
+  },
   selectContainer: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     width: '70%',
     margin: 'auto',
+    minHeight: '3rem',
   },
   spinner: {
     display: 'flex',
@@ -26,18 +30,17 @@ const styles = stylex.create({
 });
 
 const MeasurementPage = () => {
-  const { LOADING, LOADED, READY } = trackingState;
+  const { LOADED, READY } = trackingState;
   const { t } = useTranslation();
   const measurementSnap = useSnapshot(state.measurement);
-  const { isMeasurementInProgress, isMeasurementComplete, isAnalyzingResults } = measurementSnap;
-  const { deviceId } = useSnapshot(state.camera);
+  const { isMeasurementInProgress, isAnalyzingResults } = measurementSnap;
   const { faceTrackerState } = measurementSnap;
   const isFaceTrackerLoaded = faceTrackerState === LOADED || faceTrackerState === READY;
 
   const handleCancel = () => {};
 
   return (
-    <div>
+    <div {...stylex.props(styles.wrapper)}>
       {isFaceTrackerLoaded && (
         <div {...stylex.props(styles.selectContainer)}>
           <Button variant="link" onClick={handleCancel}>
@@ -51,16 +54,7 @@ const MeasurementPage = () => {
           )}
         </div>
       )}
-
       <Measurement />
-      {faceTrackerState === LOADING && (
-        <div {...stylex.props(styles.spinner)}>
-          <Loading />
-        </div>
-      )}
-      {isFaceTrackerLoaded && deviceId && <CameraToggle />}
-
-      {isMeasurementComplete && <ViewResults />}
     </div>
   );
 };
