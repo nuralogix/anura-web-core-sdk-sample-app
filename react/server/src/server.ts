@@ -11,7 +11,7 @@ import LiveReload from './livereload.ts';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const { DeviceTypeID } = enums;
-const distFolder = '../dist';
+const distFolder = '../../dist';
 const {
     API_URL,
     LICENSE_KEY,
@@ -83,7 +83,7 @@ export default class Server {
                 DeviceTypeID: DeviceTypeID.WIN32,
                 Name: 'Anura Web Core SDK',
                 Identifier: 'ANURA_WEB_CORE_SDK',
-                Version: '0.1.0-alpha.9',
+                Version: '0.1.0-alpha.21',
                 TokenExpiresIn: tokenExpiresIn
             };
             const registerLicense = await this.apiClient.http.organizations.registerLicense(payload, true);

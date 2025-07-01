@@ -1,12 +1,7 @@
-import { Results } from '@nuralogix.ai/anura-web-core-sdk';
-
-export const shouldCancelForLowSNR = (results: Results) => {
-  const { points, resultsOrder } = results;
-  const snr = Number(points.SNR.value);
-
-  const isLowSNR = snr === -100;
-  const isFakeFT = snr === -90;
-  const isFakeTOI = snr === -91;
+export const shouldCancelForLowSNR = (snrValue: number, resultsOrder: number) => {
+  const isLowSNR = snrValue === -100;
+  const isFakeFT = snrValue === -90;
+  const isFakeTOI = snrValue === -91;
   const isFake = isFakeTOI || isFakeFT;
 
   const measurementDuration = 30;

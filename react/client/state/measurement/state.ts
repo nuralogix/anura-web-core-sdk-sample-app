@@ -229,6 +229,14 @@ const measurementState: MeasurementState = proxy({
               break;
           }
         });
+        if (key === 'SNR') {
+          const snrValue = Number(points['SNR']!.value);
+          if (shouldCancelForLowSNR(snrValue, resultsOrder)) {
+            measurementState.stopMeasurement();
+            notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
+            break;
+          }
+        }
       }
       switch (errors.code) {
         case 'OK':
@@ -245,12 +253,6 @@ const measurementState: MeasurementState = proxy({
         default:
           // console.log('Error:', errors.code, errors.errors);
           break;
-      }
-
-      if (shouldCancelForLowSNR(results)) {
-        measurementState.stopMeasurement();
-        notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
-        return;
       }
 
       // Intermediate results
