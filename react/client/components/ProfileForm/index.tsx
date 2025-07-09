@@ -1,14 +1,35 @@
 import React, { useState } from 'react';
-import { TextInput, RadioButtonGroup, Heading, Button } from '@nuralogix.ai/web-ui';
+import { TextInput, RadioButtonGroup, Heading, Button, Card } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 
 const styles = stylex.create({
+  wrapper: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    minHeight: '100vh',
+    padding: '40px 20px',
+    backgroundColor: '#f8f9fa',
+  },
   container: {
-    padding: '20px',
-    maxWidth: '400px',
+    padding: '32px',
+    maxWidth: '480px',
+    width: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: '12px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
   },
   fieldWrapper: {
-    marginBottom: '16px',
+    marginBottom: '24px',
+  },
+  submitWrapper: {
+    marginTop: '32px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+  submitButton: {
+    minWidth: '160px',
+    padding: '12px 24px',
   },
 });
 
@@ -100,97 +121,99 @@ const ProfileForm = () => {
   };
 
   return (
-    <div {...stylex.props(styles.container)}>
-      <Heading>Profile Information</Heading>
-      <form onSubmit={handleSubmit}>
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <TextInput
-            label="Height (cm)"
-            value={height}
-            onChange={handleHeightChange}
-            placeholder="Enter your height"
-            type="number"
-            invalidMessage={getHeightError()}
-          />
-        </div>
+    <div {...stylex.props(styles.wrapper)}>
+      <div {...stylex.props(styles.container)}>
+        <Heading>Profile Information</Heading>
+        <form onSubmit={handleSubmit}>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <TextInput
+              label="Height (cm)"
+              value={height}
+              onChange={handleHeightChange}
+              placeholder="Enter your height"
+              type="number"
+              invalidMessage={getHeightError()}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <TextInput
-            label="Weight (kg)"
-            value={weight}
-            onChange={handleWeightChange}
-            placeholder="Enter your weight"
-            type="number"
-            invalidMessage={getWeightError()}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <TextInput
+              label="Weight (kg)"
+              value={weight}
+              onChange={handleWeightChange}
+              placeholder="Enter your weight"
+              type="number"
+              invalidMessage={getWeightError()}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <TextInput
-            label="Age"
-            value={age}
-            onChange={handleAgeChange}
-            placeholder="Enter your age"
-            type="number"
-            invalidMessage={getAgeError()}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <TextInput
+              label="Age"
+              value={age}
+              onChange={handleAgeChange}
+              placeholder="Enter your age"
+              type="number"
+              invalidMessage={getAgeError()}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <RadioButtonGroup
-            label="Sex (at birth)"
-            value={sex}
-            onChange={setSex}
-            options={[
-              { value: 'male', label: 'Male' },
-              { value: 'female', label: 'Female' },
-            ]}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <RadioButtonGroup
+              label="Sex (at birth)"
+              value={sex}
+              onChange={setSex}
+              options={[
+                { value: 'male', label: 'Male' },
+                { value: 'female', label: 'Female' },
+              ]}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <RadioButtonGroup
-            label="Do you smoke?"
-            value={smoking}
-            onChange={setSmoking}
-            options={[
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
-            ]}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <RadioButtonGroup
+              label="Do you smoke?"
+              value={smoking}
+              onChange={setSmoking}
+              options={[
+                { value: 'yes', label: 'Yes' },
+                { value: 'no', label: 'No' },
+              ]}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <RadioButtonGroup
-            label="Are you on blood pressure medication?"
-            value={bloodPressureMed}
-            onChange={setBloodPressureMed}
-            options={[
-              { value: 'yes', label: 'Yes' },
-              { value: 'no', label: 'No' },
-            ]}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <RadioButtonGroup
+              label="Are you on blood pressure medication?"
+              value={bloodPressureMed}
+              onChange={setBloodPressureMed}
+              options={[
+                { value: 'yes', label: 'Yes' },
+                { value: 'no', label: 'No' },
+              ]}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <RadioButtonGroup
-            label="Diabetes status"
-            value={diabetesStatus}
-            onChange={setDiabetesStatus}
-            options={[
-              { value: 'type1', label: 'Type 1' },
-              { value: 'type2', label: 'Type 2' },
-              { value: 'no', label: 'No' },
-            ]}
-          />
-        </div>
+          <div {...stylex.props(styles.fieldWrapper)}>
+            <RadioButtonGroup
+              label="Diabetes status"
+              value={diabetesStatus}
+              onChange={setDiabetesStatus}
+              options={[
+                { value: 'type1', label: 'Type 1' },
+                { value: 'type2', label: 'Type 2' },
+                { value: 'no', label: 'No' },
+              ]}
+            />
+          </div>
 
-        <div {...stylex.props(styles.fieldWrapper)}>
-          <Button type="submit" disabled={!isFormValid()}>
-            Submit Profile
-          </Button>
-        </div>
-      </form>
+          <div {...stylex.props(styles.submitWrapper)}>
+            <Button type="submit" disabled={!isFormValid()} {...stylex.props(styles.submitButton)}>
+              Submit Profile
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
