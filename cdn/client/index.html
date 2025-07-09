@@ -274,16 +274,15 @@
                     disableButton('toggle-camera', false);
                     await measurement.stopTracking();
                     mask.setMaskVisibility(false);
+                    toggleCameraButton.textContent = 'Open';
                 } else {
                     const success = await camera.start(1280, 720);
+                    toggleCameraButton.textContent = 'Close';
                 }
             }
 
             if (toggleCameraButton) {
                 toggleCameraButton.addEventListener('click', async () => {
-                    toggleCameraButton.textContent === 'Open'
-                    ? toggleCameraButton.textContent = 'Close'
-                    : toggleCameraButton.textContent = 'Open';
                     await toggleCamera();
                 });
             }
@@ -342,11 +341,12 @@
                 if (state === faceTrackerState.READY) {
                     disableButton('toggle-measurement', false);
                     await measurement.startTracking();
+                    mask.setLoadingState(false);
                 }
                 console.log('faceTrackerStateChanged', state);
             };
 
-            measurement.on.resultsReceived = results => {
+            measurement.on.resultsReceived = async (results) => {
                 const { points, errors, resultsOrder, finalChunkNumber } = results;
                 const pointList = Object.keys(points);
                 for (const key of pointList) {
@@ -410,6 +410,7 @@
                     tbody.appendChild(row);
                     console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
                     });
+                    await toggleCamera();
                 }
             };
 
@@ -446,6 +447,9 @@
             measurement.on.facialLandmarksUpdated = (drawables) => {
                 if(drawables.face.detected) {
                     mask.draw(drawables);
+                    if (drawables.percentCompleted >= 100) {
+                        mask.setLoadingState(true);
+                    }
                 } else {
                     console.log('No face detected');
                 }

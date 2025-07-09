@@ -93,9 +93,7 @@ const Measurement = () => {
   const {
     init,
     prepare,
-    getVersion,
     setMediaStream,
-    startTracking,
     startMeasurement,
     faceTrackerState,
     percentDownloaded,
@@ -115,16 +113,6 @@ const Measurement = () => {
       prepare();
     }
   }, []);
-
-  useEffect(() => {
-    if (faceTrackerState === trackingState.LOADED) {
-      console.log(getVersion());
-    }
-    if (faceTrackerState === trackingState.READY) {
-      startTracking();
-    }
-    console.log('Face tracker state:', faceTrackerState);
-  }, [faceTrackerState]);
 
   useEffect(() => {
     if (isOpen && cameraStream) {
@@ -188,7 +176,7 @@ const Measurement = () => {
         <div
           {...stylex.props(
             styles.measurementContainer,
-            (!isFaceTrackerLoaded || isAnalyzingResults) && styles.hiddenMedia
+            !isFaceTrackerLoaded && styles.hiddenMedia
           )}
         >
           <div {...stylex.props(styles.mediaElement)} ref={mediaElementRef} />

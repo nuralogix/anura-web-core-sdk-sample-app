@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect }  from 'react';
 import {
   type Demographics,
   faceAttributeValue,
@@ -13,7 +13,12 @@ const CameraToggle: React.FC = () => {
   const cameraSnap = useSnapshot(state.camera);
   const measurementSnap = useSnapshot(state.measurement);
   const { isOpen, deviceId } = cameraSnap;
-  const { setMaskVisibility, stopTracking, setDemographics } = measurementSnap;
+  const {
+    setMaskVisibility,
+    stopTracking,
+    setDemographics,
+    isMeasurementComplete
+  } = measurementSnap;
 
   const toggle = async () => {
     if (isOpen) {
@@ -35,6 +40,13 @@ const CameraToggle: React.FC = () => {
       const success = await state.camera.start(1280, 720);
     }
   };
+
+  useEffect(() => {
+    const toggleCamera = async () => {
+      await toggle();
+    }
+    if (isMeasurementComplete) toggleCamera();
+  } , [isMeasurementComplete]);
 
   return (
     <Button disabled={!deviceId} onClick={toggle}>

@@ -1154,10 +1154,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nuralogix.ai/anura-web-core-sdk@^0.1.0-alpha.21":
-  version "0.1.0-alpha.21"
-  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-alpha.21.tgz#231891a8ed4df461d728df986ea21e1a75299491"
-  integrity sha512-IP2LZm2lVpZOoivXWRTep5xJVY0Dafi80BVCuvKFOFh8RdrwMUE6GD3LkeG4P2kNxcFqFBptixuXPSeDvce5IQ==
+"@nuralogix.ai/anura-web-core-sdk@^0.1.0-alpha.22":
+  version "0.1.0-alpha.22"
+  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-alpha.22.tgz#eb2cd531773ca405bfc22f806fc2d3495f7b9003"
+  integrity sha512-XOEVm9H+rfTi+AvLo9kfnqFbX5lFwL9rUjGr2K03Zurkx8rfh605WszB4K9N9lB9wnhBG4zGWbigc7P214E2oQ==
 
 "@nuralogix.ai/web-ui@^0.1.0-alpha.9":
   version "0.1.0-alpha.9"

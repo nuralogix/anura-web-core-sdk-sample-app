@@ -12,11 +12,17 @@
     "type-check": "tsc"
   },
   "type": "module",
-  "keywords": ["Anura web core sdk", "Nuralogix", "DFX", "AI", "DeepAffex"],
+  "keywords": [
+    "Anura web core sdk",
+    "Nuralogix",
+    "DFX",
+    "AI",
+    "DeepAffex"
+  ],
   "author": "Hamed Hassanzadeh Amin",
   "license": "MIT",
   "dependencies": {
-    "@nuralogix.ai/dfx-api-client": "^1.0.72",
+    "@nuralogix.ai/dfx-api-client": "^1.0.73",
     "cors": "^2.8.5",
     "express": "^5.0.1"
   },
