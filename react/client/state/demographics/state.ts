@@ -1,7 +1,6 @@
 import { proxy } from 'valtio';
 import { faceAttributeValue } from '@nuralogix.ai/anura-web-core-sdk';
 import { DemographicsState } from './types';
-import loggerState from '../logger/state';
 
 const demographicsState: DemographicsState = proxy({
   demographics: {
