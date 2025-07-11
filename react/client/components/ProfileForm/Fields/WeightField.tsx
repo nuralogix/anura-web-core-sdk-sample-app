@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
+import { isWeightMetricInvalid, isWeightImperialInvalid } from '../validationUtils';
 
 interface WeightFieldProps {
   value: string;
@@ -12,16 +13,6 @@ interface WeightFieldProps {
 const WeightField: React.FC<WeightFieldProps> = ({ value, onChange, isMetric }) => {
   const { t } = useTranslation();
   const [touched, setTouched] = useState(false);
-
-  const isInvalid = () => {
-    if (!value) return false;
-    const weightNum = parseInt(value);
-    if (isMetric) {
-      return isNaN(weightNum) || weightNum < 30 || weightNum > 300;
-    } else {
-      return isNaN(weightNum) || weightNum < 66 || weightNum > 661; // roughly 30kg to 300kg in lbs
-    }
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
@@ -44,7 +35,9 @@ const WeightField: React.FC<WeightFieldProps> = ({ value, onChange, isMetric }) 
             ? 'PROFILE_FORM_WEIGHT_PLACEHOLDER_METRIC'
             : 'PROFILE_FORM_WEIGHT_PLACEHOLDER_IMPERIAL'
         )}
-        invalid={touched && isInvalid()}
+        invalid={
+          touched && (isMetric ? isWeightMetricInvalid(value) : isWeightImperialInvalid(value))
+        }
         invalidMessage={t(
           isMetric
             ? 'PROFILE_FORM_VALIDATION_WEIGHT_METRIC'

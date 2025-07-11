@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
+import { isHeightMetricInvalid } from '../validationUtils';
 
 interface MetricHeightFieldProps {
   value: string;
@@ -11,12 +12,6 @@ interface MetricHeightFieldProps {
 const MetricHeightField: React.FC<MetricHeightFieldProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
   const [touched, setTouched] = useState(false);
-
-  const isInvalid = () => {
-    if (!value) return false;
-    const heightNum = parseInt(value);
-    return isNaN(heightNum) || heightNum < 120 || heightNum > 220;
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange(e.target.value);
@@ -34,7 +29,7 @@ const MetricHeightField: React.FC<MetricHeightFieldProps> = ({ value, onChange }
         onChange={handleChange}
         placeholder={t('PROFILE_FORM_HEIGHT_PLACEHOLDER_METRIC')}
         type="text"
-        invalid={touched && isInvalid()}
+        invalid={touched && isHeightMetricInvalid(value)}
         invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_METRIC')}
         onBlur={handleBlur}
       />

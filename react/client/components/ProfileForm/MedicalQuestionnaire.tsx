@@ -2,7 +2,7 @@ import React from 'react';
 import SmokingField from './Fields/SmokingField';
 import BloodPressureMedField from './Fields/BloodPressureMedField';
 import DiabetesStatusField from './Fields/DiabetesStatusField';
-import { FormState } from './types';
+import { FormState, SmokingStatus, BloodPressureMedStatus, DiabetesStatus } from './types';
 
 interface MedicalQuestionnaireProps {
   formState: FormState;
@@ -10,15 +10,15 @@ interface MedicalQuestionnaireProps {
 }
 
 const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({ formState, setFormState }) => {
-  const handleSmokingChange = (value: string) => {
+  const handleSmokingChange = (value: SmokingStatus) => {
     setFormState((prev) => ({ ...prev, smoking: value }));
   };
 
-  const handleBloodPressureMedChange = (value: string) => {
+  const handleBloodPressureMedChange = (value: BloodPressureMedStatus) => {
     setFormState((prev) => ({ ...prev, bloodPressureMed: value }));
   };
 
-  const handleDiabetesStatusChange = (value: string) => {
+  const handleDiabetesStatusChange = (value: DiabetesStatus) => {
     setFormState((prev) => ({ ...prev, diabetesStatus: value }));
   };
 

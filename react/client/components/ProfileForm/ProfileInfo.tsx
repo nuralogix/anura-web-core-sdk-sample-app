@@ -5,7 +5,7 @@ import AgeField from './Fields/AgeField';
 import UnitSelector from './Fields/UnitSelector';
 import WeightField from './Fields/WeightField';
 import SexSelector from './Fields/SexSelector';
-import { FormState } from './types';
+import { FormState, Unit, Sex } from './types';
 
 interface ProfileInfoProps {
   formState: FormState;
@@ -19,7 +19,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
     setFormState((prev) => ({ ...prev, age: value }));
   };
 
-  const handleUnitChange = (value: 'metric' | 'imperial') => {
+  const handleUnitChange = (value: Unit) => {
     setFormState((prev) => ({ ...prev, unit: value }));
   };
 
@@ -39,7 +39,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
     setFormState((prev) => ({ ...prev, weight: value }));
   };
 
-  const handleSexChange = (value: string) => {
+  const handleSexSelection = (value: Sex) => {
     setFormState((prev) => ({ ...prev, sex: value }));
   };
 
@@ -58,7 +58,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
         />
       )}
       <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
-      <SexSelector value={formState.sex} onChange={handleSexChange} />
+      <SexSelector value={formState.sex} onChange={handleSexSelection} />
     </>
   );
 };

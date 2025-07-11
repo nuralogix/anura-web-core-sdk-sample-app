@@ -2,10 +2,11 @@ import React from 'react';
 import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
+import { Unit } from '../types';
 
 interface UnitSelectorProps {
-  value: 'metric' | 'imperial';
-  onChange: (value: 'metric' | 'imperial') => void;
+  value: Unit;
+  onChange: (value: Unit) => void;
 }
 
 const UnitSelector: React.FC<UnitSelectorProps> = ({ value, onChange }) => {
@@ -17,7 +18,7 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({ value, onChange }) => {
   ];
 
   const handleChange = (value: string) => {
-    onChange(value as 'metric' | 'imperial');
+    onChange(value as Unit);
   };
 
   return (

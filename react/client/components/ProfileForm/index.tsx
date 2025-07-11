@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import ProfileInfo from './ProfileInfo';
 import MedicalQuestionnaire from './MedicalQuestionnaire';
 import { FormState } from './types';
+import { isFormValid } from './validationUtils';
 
 const styles = stylex.create({
   wrapper: {
@@ -55,37 +56,6 @@ const ProfileForm = () => {
     diabetesStatus: '',
   });
 
-  // Validation functions for form submission (parent needs these for isFormValid)
-  const isAgeInvalid = () => {
-    if (!formState.age) return false;
-    const ageNum = parseInt(formState.age);
-    return isNaN(ageNum) || ageNum < 13 || ageNum > 120;
-  };
-
-  const isHeightInvalid = () => {
-    if (formState.unit === 'metric') {
-      if (!formState.heightMetric) return false;
-      const heightNum = parseInt(formState.heightMetric);
-      return isNaN(heightNum) || heightNum < 120 || heightNum > 220;
-    } else {
-      if (!formState.heightFeet || !formState.heightInches) return false;
-      const feet = parseInt(formState.heightFeet);
-      const inches = parseInt(formState.heightInches);
-
-      if (isNaN(feet) || isNaN(inches)) return true;
-      if (feet < 3 || feet > 7) return true;
-      if (inches < 0 || inches > 11) return true;
-
-      return false;
-    }
-  };
-
-  const isWeightInvalid = () => {
-    if (!formState.weight) return false;
-    const weightNum = parseInt(formState.weight);
-    return isNaN(weightNum) || weightNum < 30 || weightNum > 300;
-  };
-
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -96,27 +66,6 @@ const ProfileForm = () => {
     // - Show success message
     // - Reset form
     // - Navigate to next page
-  };
-
-  const isFormValid = () => {
-    const hasValidHeight =
-      formState.unit === 'metric'
-        ? formState.heightMetric
-        : formState.heightFeet && formState.heightInches;
-
-    return (
-      !isHeightInvalid() &&
-      !isWeightInvalid() &&
-      !isAgeInvalid() &&
-      formState.unit &&
-      hasValidHeight &&
-      formState.weight &&
-      formState.age &&
-      formState.sex &&
-      formState.smoking &&
-      formState.bloodPressureMed &&
-      formState.diabetesStatus
-    );
   };
 
   return (
@@ -130,7 +79,11 @@ const ProfileForm = () => {
           <ProfileInfo formState={formState} setFormState={setFormState} />
           <MedicalQuestionnaire formState={formState} setFormState={setFormState} />
           <div {...stylex.props(styles.submitWrapper)}>
-            <Button type="submit" disabled={!isFormValid()} {...stylex.props(styles.submitButton)}>
+            <Button
+              type="submit"
+              disabled={!isFormValid(formState)}
+              {...stylex.props(styles.submitButton)}
+            >
               {t('PROFILE_FORM_SUBMIT_BUTTON')}
             </Button>
           </div>

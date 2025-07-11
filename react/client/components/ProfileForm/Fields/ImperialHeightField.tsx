@@ -3,6 +3,7 @@ import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import * as stylex from '@stylexjs/stylex';
 import FieldWrapper from '../FieldWrapper';
+import { isHeightFeetInvalid, isHeightInchesInvalid } from '../validationUtils';
 
 const styles = stylex.create({
   container: {
@@ -32,18 +33,6 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
   const [feetTouched, setFeetTouched] = useState(false);
   const [inchesTouched, setInchesTouched] = useState(false);
 
-  const isFeetInvalid = () => {
-    if (!feet) return false;
-    const feetNum = parseInt(feet);
-    return isNaN(feetNum) || feetNum < 3 || feetNum > 7;
-  };
-
-  const isInchesInvalid = () => {
-    if (!inches) return false;
-    const inchesNum = parseInt(inches);
-    return isNaN(inchesNum) || inchesNum < 0 || inchesNum > 11;
-  };
-
   const handleFeetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onFeetChange(e.target.value);
   };
@@ -70,7 +59,7 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
             onChange={handleFeetChange}
             placeholder={t('PROFILE_FORM_HEIGHT_FEET_PLACEHOLDER')}
             type="text"
-            invalid={feetTouched && isFeetInvalid()}
+            invalid={feetTouched && isHeightFeetInvalid(feet)}
             invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_FEET')}
             onBlur={handleFeetBlur}
           />
@@ -82,7 +71,7 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
             onChange={handleInchesChange}
             placeholder={t('PROFILE_FORM_HEIGHT_INCHES_PLACEHOLDER')}
             type="text"
-            invalid={inchesTouched && isInchesInvalid()}
+            invalid={inchesTouched && isHeightInchesInvalid(inches)}
             invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_INCHES')}
             onBlur={handleInchesBlur}
           />
