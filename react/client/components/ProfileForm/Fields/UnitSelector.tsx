@@ -3,6 +3,7 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 import { Unit } from '../types';
+import { FORM_VALUES } from '../constants';
 
 interface UnitSelectorProps {
   value: Unit;
@@ -13,8 +14,8 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
   const unitOptions = [
-    { value: 'metric', label: t('METRIC') },
-    { value: 'imperial', label: t('IMPERIAL') },
+    { value: FORM_VALUES.METRIC, label: t('METRIC') },
+    { value: FORM_VALUES.IMPERIAL, label: t('IMPERIAL') },
   ];
 
   const handleChange = (value: string) => {
@@ -24,7 +25,6 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({ value, onChange }) => {
   return (
     <FieldWrapper>
       <RadioButtonGroup
-        direction="row"
         label={t('PROFILE_FORM_UNIT_LABEL')}
         value={value}
         onChange={handleChange}

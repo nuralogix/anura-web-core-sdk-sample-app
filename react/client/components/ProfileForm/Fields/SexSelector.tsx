@@ -3,6 +3,7 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 import { Sex } from '../types';
+import { FORM_VALUES } from '../constants';
 
 interface SexSelectorProps {
   value: Sex;
@@ -13,8 +14,8 @@ const SexSelector: React.FC<SexSelectorProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
   const sexOptions = [
-    { value: 'male', label: t('MALE') },
-    { value: 'female', label: t('FEMALE') },
+    { value: FORM_VALUES.MALE, label: t('MALE') },
+    { value: FORM_VALUES.FEMALE, label: t('FEMALE') },
   ];
 
   const handleChange = (value: string) => {

@@ -3,7 +3,11 @@ import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import * as stylex from '@stylexjs/stylex';
 import FieldWrapper from '../FieldWrapper';
-import { isHeightFeetInvalid, isHeightInchesInvalid } from '../validationUtils';
+import {
+  isHeightFeetInvalid,
+  isHeightInchesInvalid,
+  createFieldBlurHandler,
+} from '../validationUtils';
 
 const styles = stylex.create({
   container: {
@@ -41,13 +45,8 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
     onInchesChange(e.target.value);
   };
 
-  const handleFeetBlur = () => {
-    setFeetTouched(true);
-  };
-
-  const handleInchesBlur = () => {
-    setInchesTouched(true);
-  };
+  const handleFeetBlur = createFieldBlurHandler(feet, onFeetChange, setFeetTouched);
+  const handleInchesBlur = createFieldBlurHandler(inches, onInchesChange, setInchesTouched);
 
   return (
     <FieldWrapper>

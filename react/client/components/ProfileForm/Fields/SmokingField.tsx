@@ -3,6 +3,7 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 import { SmokingStatus } from '../types';
+import { FORM_VALUES } from '../constants';
 
 interface SmokingFieldProps {
   value: SmokingStatus;
@@ -13,8 +14,8 @@ const SmokingField: React.FC<SmokingFieldProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
   const smokingOptions = [
-    { value: 'yes', label: t('YES') },
-    { value: 'no', label: t('NO') },
+    { value: FORM_VALUES.YES, label: t('YES') },
+    { value: FORM_VALUES.NO, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {
@@ -24,7 +25,6 @@ const SmokingField: React.FC<SmokingFieldProps> = ({ value, onChange }) => {
   return (
     <FieldWrapper>
       <RadioButtonGroup
-        direction="row"
         label={t('PROFILE_FORM_SMOKING_LABEL')}
         value={value}
         onChange={handleChange}

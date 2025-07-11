@@ -1,12 +1,18 @@
-export type Unit = 'metric' | 'imperial';
+import { FORM_VALUES } from './constants';
 
-export type SmokingStatus = 'yes' | 'no' | '';
+export type Unit = typeof FORM_VALUES.METRIC | typeof FORM_VALUES.IMPERIAL;
 
-export type BloodPressureMedStatus = 'yes' | 'no' | '';
+export type SmokingStatus = typeof FORM_VALUES.YES | typeof FORM_VALUES.NO | '';
 
-export type Sex = 'male' | 'female' | '';
+export type BloodPressureMedStatus = typeof FORM_VALUES.YES | typeof FORM_VALUES.NO | '';
 
-export type DiabetesStatus = 'type1' | 'type2' | 'no' | '';
+export type Sex = typeof FORM_VALUES.MALE | typeof FORM_VALUES.FEMALE | '';
+
+export type DiabetesStatus =
+  | typeof FORM_VALUES.DIABETES_TYPE1
+  | typeof FORM_VALUES.DIABETES_TYPE2
+  | typeof FORM_VALUES.DIABETES_NO
+  | '';
 
 export interface FormState {
   unit: Unit;

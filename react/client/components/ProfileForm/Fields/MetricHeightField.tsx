@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
-import { isHeightMetricInvalid } from '../validationUtils';
+import { isHeightMetricInvalid, createFieldBlurHandler } from '../validationUtils';
 
 interface MetricHeightFieldProps {
   value: string;
@@ -17,9 +17,7 @@ const MetricHeightField: React.FC<MetricHeightFieldProps> = ({ value, onChange }
     onChange(e.target.value);
   };
 
-  const handleBlur = () => {
-    setTouched(true);
-  };
+  const handleBlur = createFieldBlurHandler(value, onChange, setTouched);
 
   return (
     <FieldWrapper>

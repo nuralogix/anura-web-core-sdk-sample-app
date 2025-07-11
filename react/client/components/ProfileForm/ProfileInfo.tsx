@@ -6,6 +6,7 @@ import UnitSelector from './Fields/UnitSelector';
 import WeightField from './Fields/WeightField';
 import SexSelector from './Fields/SexSelector';
 import { FormState, Unit, Sex } from './types';
+import { FORM_VALUES } from './constants';
 
 interface ProfileInfoProps {
   formState: FormState;
@@ -13,7 +14,7 @@ interface ProfileInfoProps {
 }
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) => {
-  const isMetric = formState.unit === 'metric';
+  const isMetric = formState.unit === FORM_VALUES.METRIC;
 
   const handleAgeChange = (value: string) => {
     setFormState((prev) => ({ ...prev, age: value }));

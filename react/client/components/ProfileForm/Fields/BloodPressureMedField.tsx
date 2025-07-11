@@ -3,6 +3,7 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 import { BloodPressureMedStatus } from '../types';
+import { FORM_VALUES } from '../constants';
 
 interface BloodPressureMedFieldProps {
   value: BloodPressureMedStatus;
@@ -13,8 +14,8 @@ const BloodPressureMedField: React.FC<BloodPressureMedFieldProps> = ({ value, on
   const { t } = useTranslation();
 
   const bloodPressureMedOptions = [
-    { value: 'yes', label: t('YES') },
-    { value: 'no', label: t('NO') },
+    { value: FORM_VALUES.YES, label: t('YES') },
+    { value: FORM_VALUES.NO, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {
@@ -24,7 +25,6 @@ const BloodPressureMedField: React.FC<BloodPressureMedFieldProps> = ({ value, on
   return (
     <FieldWrapper>
       <RadioButtonGroup
-        direction="row"
         label={t('PROFILE_FORM_BLOOD_PRESSURE_LABEL')}
         value={value}
         onChange={handleChange}

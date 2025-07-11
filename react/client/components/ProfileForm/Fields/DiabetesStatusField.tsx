@@ -3,6 +3,7 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 import { DiabetesStatus } from '../types';
+import { FORM_VALUES } from '../constants';
 
 interface DiabetesStatusFieldProps {
   value: DiabetesStatus;
@@ -13,9 +14,9 @@ const DiabetesStatusField: React.FC<DiabetesStatusFieldProps> = ({ value, onChan
   const { t } = useTranslation();
 
   const diabetesStatusOptions = [
-    { value: 'type1', label: t('TYPE_1') },
-    { value: 'type2', label: t('TYPE_2') },
-    { value: 'no', label: t('NO') },
+    { value: FORM_VALUES.DIABETES_TYPE1, label: t('TYPE_1') },
+    { value: FORM_VALUES.DIABETES_TYPE2, label: t('TYPE_2') },
+    { value: FORM_VALUES.DIABETES_NO, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {
@@ -25,7 +26,6 @@ const DiabetesStatusField: React.FC<DiabetesStatusFieldProps> = ({ value, onChan
   return (
     <FieldWrapper>
       <RadioButtonGroup
-        direction="row"
         label={t('PROFILE_FORM_DIABETES_LABEL')}
         value={value}
         onChange={handleChange}
