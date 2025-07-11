@@ -2,7 +2,7 @@ import { faceAttributeValue } from '@nuralogix.ai/anura-web-core-sdk';
 import { FormState } from './types';
 
 export const FORM_VALUES = {
-  // Unit system options (these don't map directly to SDK, so keep as strings)
+  // Unit system options
   METRIC: 'Metric',
   IMPERIAL: 'Imperial',
 

@@ -92,7 +92,7 @@ const FormWizard = () => {
       console.log('Converted demographics:', demographicsData);
 
       // Navigate to measurement page
-      navigate('/measurement');
+      navigate('/');
     } catch (error) {
       console.error('Error submitting form:', error);
       // TODO: Show error notification to user

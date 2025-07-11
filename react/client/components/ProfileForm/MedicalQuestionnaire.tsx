@@ -1,7 +1,5 @@
 import React from 'react';
-import SmokingField from './Fields/SmokingField';
-import BloodPressureMedField from './Fields/BloodPressureMedField';
-import DiabetesStatusField from './Fields/DiabetesStatusField';
+import { SmokingField, BloodPressureMedField, DiabetesStatusField } from './Fields';
 import { FormState, SmokingStatus, BloodPressureMedStatus, DiabetesStatus } from './types';
 
 interface MedicalQuestionnaireProps {

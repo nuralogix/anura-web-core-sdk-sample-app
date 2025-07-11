@@ -1,10 +1,12 @@
 import React from 'react';
-import MetricHeightField from './Fields/MetricHeightField';
-import ImperialHeightField from './Fields/ImperialHeightField';
-import AgeField from './Fields/AgeField';
-import UnitSelector from './Fields/UnitSelector';
-import WeightField from './Fields/WeightField';
-import SexSelector from './Fields/SexSelector';
+import {
+  MetricHeightField,
+  ImperialHeightField,
+  AgeField,
+  UnitSelector,
+  WeightField,
+  SexSelector,
+} from './Fields';
 import { FormState, Unit, Sex } from './types';
 import { FORM_VALUES } from './constants';
 
