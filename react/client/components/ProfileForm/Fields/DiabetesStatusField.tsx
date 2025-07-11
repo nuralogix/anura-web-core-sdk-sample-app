@@ -16,7 +16,7 @@ const DiabetesStatusField: React.FC<DiabetesStatusFieldProps> = ({ value, onChan
   const diabetesStatusOptions = [
     { value: FORM_VALUES.DIABETES_TYPE1, label: t('TYPE_1') },
     { value: FORM_VALUES.DIABETES_TYPE2, label: t('TYPE_2') },
-    { value: FORM_VALUES.DIABETES_NO, label: t('NO') },
+    { value: FORM_VALUES.DIABETES_NONE, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {

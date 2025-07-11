@@ -1,22 +1,27 @@
+import { faceAttributeValue } from '@nuralogix.ai/anura-web-core-sdk';
 import { FormState } from './types';
 
 export const FORM_VALUES = {
-  // Yes/No options for radio buttons
-  YES: 'yes',
-  NO: 'no',
+  // Unit system options (these don't map directly to SDK, so keep as strings)
+  METRIC: 'Metric',
+  IMPERIAL: 'Imperial',
 
-  // Unit system options
-  METRIC: 'metric',
-  IMPERIAL: 'imperial',
+  // Sex options - use SDK values as strings for form compatibility
+  MALE: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH.toString(),
+  FEMALE: faceAttributeValue.SEX_ASSIGNED_FEMALE_AT_BIRTH.toString(),
 
-  // Sex options
-  MALE: 'male',
-  FEMALE: 'female',
+  // Smoking options - use SDK values as strings for form compatibility
+  SMOKER_TRUE: faceAttributeValue.SMOKER_TRUE.toString(),
+  SMOKER_FALSE: faceAttributeValue.SMOKER_FALSE.toString(),
 
-  // Diabetes status options
-  DIABETES_TYPE1: 'type1',
-  DIABETES_TYPE2: 'type2',
-  DIABETES_NO: 'no',
+  // Blood pressure medication options - use SDK values as strings for form compatibility
+  BLOOD_PRESSURE_MEDICATION_TRUE: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_TRUE.toString(),
+  BLOOD_PRESSURE_MEDICATION_FALSE: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE.toString(),
+
+  // Diabetes status options - use SDK values as strings for form compatibility
+  DIABETES_TYPE1: faceAttributeValue.DIABETES_TYPE1.toString(),
+  DIABETES_TYPE2: faceAttributeValue.DIABETES_TYPE2.toString(),
+  DIABETES_NONE: faceAttributeValue.DIABETES_NONE.toString(),
 } as const;
 
 // Initial form state

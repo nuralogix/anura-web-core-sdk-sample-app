@@ -14,8 +14,8 @@ const SmokingField: React.FC<SmokingFieldProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
   const smokingOptions = [
-    { value: FORM_VALUES.YES, label: t('YES') },
-    { value: FORM_VALUES.NO, label: t('NO') },
+    { value: FORM_VALUES.SMOKER_TRUE, label: t('YES') },
+    { value: FORM_VALUES.SMOKER_FALSE, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {

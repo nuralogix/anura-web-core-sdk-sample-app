@@ -5,8 +5,11 @@ import { useTranslation } from 'react-i18next';
 import ProfileInfo from './ProfileInfo';
 import MedicalQuestionnaire from './MedicalQuestionnaire';
 import { FormState, WizardStep } from './types';
-import { isProfileInfoValid, isMedicalQuestionnaireValid } from './validationUtils';
+import { isProfileInfoValid, isMedicalQuestionnaireValid, isFormValid } from './validationUtils';
 import { INITIAL_FORM_STATE, WIZARD_STEPS } from './constants';
+import { convertFormStateToSDKDemographics } from './conversionUtils';
+import { useNavigate } from 'react-router';
+import state from '../../state';
 
 const styles = stylex.create({
   wrapper: {
@@ -44,6 +47,7 @@ const FormWizard = () => {
   const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS.PROFILE);
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
+  const navigate = useNavigate();
 
   // Clear height and weight values when unit changes
   useEffect(() => {
@@ -70,8 +74,29 @@ const FormWizard = () => {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log('Form submitted with data:', formState);
-    // Add logic for final submission
+
+    // Defensive validation check
+    if (!isFormValid(formState)) {
+      console.warn('Form submission attempted with invalid data');
+      return;
+    }
+
+    try {
+      // Convert form data to SDK format
+      const demographicsData = convertFormStateToSDKDemographics(formState);
+
+      // Update the demographics store
+      state.demographics.setDemographics(demographicsData);
+
+      console.log('Form submitted successfully:', formState);
+      console.log('Converted demographics:', demographicsData);
+
+      // Navigate to measurement page
+      navigate('/measurement');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // TODO: Show error notification to user
+    }
   };
 
   const renderStepContent = () => {

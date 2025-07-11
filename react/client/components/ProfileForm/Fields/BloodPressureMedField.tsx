@@ -14,8 +14,8 @@ const BloodPressureMedField: React.FC<BloodPressureMedFieldProps> = ({ value, on
   const { t } = useTranslation();
 
   const bloodPressureMedOptions = [
-    { value: FORM_VALUES.YES, label: t('YES') },
-    { value: FORM_VALUES.NO, label: t('NO') },
+    { value: FORM_VALUES.BLOOD_PRESSURE_MEDICATION_TRUE, label: t('YES') },
+    { value: FORM_VALUES.BLOOD_PRESSURE_MEDICATION_FALSE, label: t('NO') },
   ];
 
   const handleChange = (value: string) => {
