@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heading, Button, Card, Paragraph } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
@@ -18,16 +18,18 @@ const styles = stylex.create({
   },
   card: {
     padding: '32px',
-    maxWidth: '480px',
+    maxWidth: '450px',
     width: '100%',
   },
   buttonWrapper: {
     marginTop: '32px',
     display: 'flex',
-    justifyContent: 'space-between',
+    flexDirection: 'column',
     gap: '16px',
+    alignItems: 'center',
   },
-  singleButton: {
+  nextButton: {
+    marginTop: '32px',
     display: 'flex',
     justifyContent: 'center',
   },
@@ -43,6 +45,17 @@ const FormWizard = () => {
   const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS.PROFILE);
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
 
+  // Clear height and weight values when unit changes
+  useEffect(() => {
+    setFormState((prev) => ({
+      ...prev,
+      heightMetric: '',
+      heightFeet: '',
+      heightInches: '',
+      weight: '',
+    }));
+  }, [formState.unit]);
+
   const handleNextStep = () => {
     if (currentStep === WIZARD_STEPS.PROFILE && isProfileInfoValid(formState)) {
       setCurrentStep(WIZARD_STEPS.MEDICAL);
@@ -55,7 +68,8 @@ const FormWizard = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     console.log('Form submitted with data:', formState);
     // Add logic for final submission
   };
@@ -66,16 +80,14 @@ const FormWizard = () => {
         return <ProfileInfo formState={formState} setFormState={setFormState} />;
       case WIZARD_STEPS.MEDICAL:
         return <MedicalQuestionnaire formState={formState} setFormState={setFormState} />;
-      default:
-        return null;
     }
   };
 
   const renderButtons = () => {
     if (currentStep === WIZARD_STEPS.PROFILE) {
       return (
-        <div {...stylex.props(styles.singleButton)}>
-          <Button onClick={handleNextStep} disabled={!isProfileInfoValid(formState)}>
+        <div {...stylex.props(styles.nextButton)}>
+          <Button width="100%" onClick={handleNextStep} disabled={!isProfileInfoValid(formState)}>
             {t('NEXT')}
           </Button>
         </div>
@@ -85,11 +97,11 @@ const FormWizard = () => {
     if (currentStep === WIZARD_STEPS.MEDICAL) {
       return (
         <div {...stylex.props(styles.buttonWrapper)}>
-          <Button variant="outline" onClick={handlePreviousStep}>
-            {t('PREVIOUS')}
-          </Button>
-          <Button onClick={handleSubmit} disabled={!isMedicalQuestionnaireValid(formState)}>
+          <Button width="100%" type="submit" disabled={!isMedicalQuestionnaireValid(formState)}>
             {t('PROFILE_FORM_SUBMIT_BUTTON')}
+          </Button>
+          <Button variant="link" onClick={handlePreviousStep}>
+            {t('BACK')}
           </Button>
         </div>
       );
@@ -112,8 +124,10 @@ const FormWizard = () => {
         <div {...stylex.props(styles.introMessage)}>
           <Paragraph>{t('PROFILE_FORM_INTRO_MESSAGE')}</Paragraph>
         </div>
-        {renderStepContent()}
-        {renderButtons()}
+        <form onSubmit={handleSubmit}>
+          {renderStepContent()}
+          {renderButtons()}
+        </form>
       </Card>
     </div>
   );

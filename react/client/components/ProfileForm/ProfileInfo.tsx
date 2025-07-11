@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import MetricHeightField from './Fields/MetricHeightField';
 import ImperialHeightField from './Fields/ImperialHeightField';
 import AgeField from './Fields/AgeField';
@@ -15,17 +15,6 @@ interface ProfileInfoProps {
 
 const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) => {
   const isMetric = formState.unit === FORM_VALUES.METRIC;
-
-  // Clear height and weight values when unit changes
-  useEffect(() => {
-    setFormState((prev) => ({
-      ...prev,
-      heightMetric: '',
-      heightFeet: '',
-      heightInches: '',
-      weight: '',
-    }));
-  }, [formState.unit, setFormState]);
 
   const handleAgeChange = (value: string) => {
     setFormState((prev) => ({ ...prev, age: value }));

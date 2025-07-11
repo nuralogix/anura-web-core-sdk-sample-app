@@ -53,7 +53,7 @@
   "PROFILE_FORM_STEP_1_TITLE": "Informations de base",
   "PROFILE_FORM_STEP_2_TITLE": "Questions de santé",
   "NEXT": "Suivant",
-  "PREVIOUS": "Précédent",
+  "BACK": "Retour",
   "PROFILE_FORM_VALIDATION_HEIGHT_METRIC": "La taille doit être comprise entre 120 et 220 cm",
   "PROFILE_FORM_VALIDATION_HEIGHT_IMPERIAL": "La taille doit être comprise entre 3'11\" et 7'2\"",
   "PROFILE_FORM_VALIDATION_HEIGHT_FEET": "Entrez les pieds (3-7)",

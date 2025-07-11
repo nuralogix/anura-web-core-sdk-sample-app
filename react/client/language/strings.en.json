@@ -54,7 +54,7 @@
   "PROFILE_FORM_STEP_1_TITLE": "Basic Information",
   "PROFILE_FORM_STEP_2_TITLE": "Health Questions",
   "NEXT": "Next",
-  "PREVIOUS": "Previous",
+  "BACK": "Back",
   "PROFILE_FORM_VALIDATION_HEIGHT_METRIC": "Height must be between 120 and 220 cm",
   "PROFILE_FORM_VALIDATION_HEIGHT_IMPERIAL": "Height must be between 3'11\" and 7'2\"",
   "PROFILE_FORM_VALIDATION_HEIGHT_FEET": "Enter feet (3-7)",
