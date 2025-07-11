@@ -151,7 +151,7 @@ const FormWizard = () => {
         </div>
         <form onSubmit={handleSubmit}>
           {renderStepContent()}
-          {renderButtons()}
+          <div key={currentStep}>{renderButtons()}</div>
         </form>
       </Card>
     </div>
