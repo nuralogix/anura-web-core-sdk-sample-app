@@ -49,7 +49,7 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
   const handleInchesBlur = createFieldBlurHandler(inches, onInchesChange, setInchesTouched);
 
   return (
-    <FieldWrapper>
+    <FieldWrapper variant="textInput">
       <div {...stylex.props(styles.container)}>
         <div {...stylex.props(styles.inputWrapper)}>
           <TextInput

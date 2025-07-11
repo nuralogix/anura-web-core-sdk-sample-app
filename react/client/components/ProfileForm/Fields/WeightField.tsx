@@ -30,7 +30,7 @@ const WeightField: React.FC<WeightFieldProps> = ({ value, onChange, isMetric }) 
   const handleBlur = createFieldBlurHandler(value, onChange, setTouched);
 
   return (
-    <FieldWrapper>
+    <FieldWrapper variant="textInput">
       <TextInput
         label={t(
           isMetric ? 'PROFILE_FORM_WEIGHT_LABEL_METRIC' : 'PROFILE_FORM_WEIGHT_LABEL_IMPERIAL'

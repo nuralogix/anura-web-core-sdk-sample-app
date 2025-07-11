@@ -20,7 +20,7 @@ const MetricHeightField: React.FC<MetricHeightFieldProps> = ({ value, onChange }
   const handleBlur = createFieldBlurHandler(value, onChange, setTouched);
 
   return (
-    <FieldWrapper>
+    <FieldWrapper variant="textInput">
       <TextInput
         label={t('PROFILE_FORM_HEIGHT_LABEL_METRIC')}
         value={value}

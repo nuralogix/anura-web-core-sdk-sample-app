@@ -46,6 +46,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
 
   return (
     <>
+      <SexSelector value={formState.sex} onChange={handleSexSelection} />
       <AgeField value={formState.age} onChange={handleAgeChange} />
       <UnitSelector value={formState.unit} onChange={handleUnitChange} />
       {isMetric ? (
@@ -59,7 +60,6 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
         />
       )}
       <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
-      <SexSelector value={formState.sex} onChange={handleSexSelection} />
     </>
   );
 };

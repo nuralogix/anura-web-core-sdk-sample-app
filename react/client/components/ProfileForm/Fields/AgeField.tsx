@@ -20,7 +20,7 @@ const AgeField: React.FC<AgeFieldProps> = ({ value, onChange }) => {
   const handleBlur = createFieldBlurHandler(value, onChange, setTouched);
 
   return (
-    <FieldWrapper>
+    <FieldWrapper variant="textInput">
       <TextInput
         label={t('PROFILE_FORM_AGE_LABEL')}
         value={value}
