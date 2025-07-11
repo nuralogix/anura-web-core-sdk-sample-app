@@ -60,5 +60,6 @@
   "PROFILE_FORM_VALIDATION_HEIGHT_INCHES": "Entrez les pouces (0-11)",
   "PROFILE_FORM_VALIDATION_WEIGHT_METRIC": "Le poids doit être compris entre 30 et 300 kg",
   "PROFILE_FORM_VALIDATION_WEIGHT_IMPERIAL": "Le poids doit être compris entre 66 et 661 lb",
-  "PROFILE_FORM_VALIDATION_AGE": "L'âge doit être compris entre 13 et 120 ans"
+  "PROFILE_FORM_VALIDATION_AGE": "L'âge doit être compris entre 13 et 120 ans",
+  "PROFILE_FORM_VALIDATION_BMI": "L'IMC doit être compris entre 10 et 65 pour une mesure précise"
 }

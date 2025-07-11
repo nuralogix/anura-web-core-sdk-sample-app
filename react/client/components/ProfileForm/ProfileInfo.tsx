@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button } from '@nuralogix.ai/web-ui';
+import { Button, Paragraph } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,7 +12,7 @@ import {
 } from './Fields';
 import { FormState, Unit, Sex } from './types';
 import { FORM_VALUES } from './constants';
-import { isProfileInfoValid } from './validationUtils';
+import { isProfileInfoValid, isBMIInvalid } from './validationUtils';
 
 const styles = stylex.create({
   nextButton: {
@@ -65,6 +65,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
       <SexSelector value={formState.sex} onChange={handleSexSelection} />
       <AgeField value={formState.age} onChange={handleAgeChange} />
       <UnitSelector value={formState.unit} onChange={handleUnitChange} />
+      {isBMIInvalid(formState) && <Paragraph>{t('PROFILE_FORM_VALIDATION_BMI')}</Paragraph>}
       {isMetric ? (
         <MetricHeightField value={formState.heightMetric} onChange={handleHeightMetricChange} />
       ) : (

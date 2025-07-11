@@ -61,5 +61,6 @@
   "PROFILE_FORM_VALIDATION_HEIGHT_INCHES": "Enter inches (0-11)",
   "PROFILE_FORM_VALIDATION_WEIGHT_METRIC": "Weight must be between 30 and 300 kg",
   "PROFILE_FORM_VALIDATION_WEIGHT_IMPERIAL": "Weight must be between 66 and 661 lbs",
-  "PROFILE_FORM_VALIDATION_AGE": "Age must be between 13 and 120 years"
+  "PROFILE_FORM_VALIDATION_AGE": "Age must be between 13 and 120 years",
+  "PROFILE_FORM_VALIDATION_BMI": "BMI must be between 10 and 65 for an accurate measurement"
 }

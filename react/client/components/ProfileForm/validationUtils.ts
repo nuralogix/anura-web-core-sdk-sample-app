@@ -12,6 +12,8 @@ import {
   WEIGHT_METRIC_MAX,
   WEIGHT_IMPERIAL_MIN,
   WEIGHT_IMPERIAL_MAX,
+  BMI_MIN,
+  BMI_MAX,
 } from './constants';
 import { FormState } from './types';
 
@@ -82,18 +84,53 @@ export const isWeightInvalid = (formState: FormState): boolean => {
   }
 };
 
-export const isFormValid = (formState: FormState): boolean => {
-  const { age, sex, smoking, bloodPressureMed, diabetesStatus } = formState;
+// BMI calculation utility
+const calculateBMI = (formState: FormState): number | null => {
+  // Only calculate BMI if both height and weight are valid
+  if (isHeightInvalid(formState) || isWeightInvalid(formState)) {
+    return null;
+  }
 
-  return (
-    !isHeightInvalid(formState) &&
-    !isWeightInvalid(formState) &&
-    !isAgeInvalid(age) &&
-    sex !== '' &&
-    smoking !== '' &&
-    bloodPressureMed !== '' &&
-    diabetesStatus !== ''
-  );
+  let heightInCm: number;
+  let weightInKg: number;
+
+  if (formState.unit === FORM_VALUES.METRIC) {
+    heightInCm = parseInt(formState.heightMetric.replace(/\s/g, ''));
+    weightInKg = parseInt(formState.weight.replace(/\s/g, ''));
+  } else {
+    // Convert imperial to metric
+    const feet = parseInt(formState.heightFeet.replace(/\s/g, ''));
+    const inches = parseInt(formState.heightInches.replace(/\s/g, ''));
+    const totalInches = feet * 12 + inches;
+    heightInCm = totalInches * 2.54;
+
+    const weightInLbs = parseInt(formState.weight.replace(/\s/g, ''));
+    weightInKg = weightInLbs * 0.453592;
+  }
+
+  const heightInM = heightInCm / 100;
+  return weightInKg / (heightInM * heightInM);
+};
+
+// BMI validation utility
+export const isBMIInvalid = (formState: FormState): boolean => {
+  const bmi = calculateBMI(formState);
+  if (bmi === null) {
+    return false; // Don't show BMI error if height/weight are invalid
+  }
+  return bmi < BMI_MIN || bmi > BMI_MAX;
+};
+
+// Utility to get BMI value for display purposes
+export const getBMI = (formState: FormState): number | null => {
+  return calculateBMI(formState);
+};
+
+// Utility to format BMI for display
+export const formatBMI = (formState: FormState): string | null => {
+  const bmi = calculateBMI(formState);
+  if (bmi === null) return null;
+  return bmi.toFixed(1);
 };
 
 // Step-specific validation functions
@@ -101,7 +138,11 @@ export const isProfileInfoValid = (formState: FormState): boolean => {
   const { age, sex } = formState;
 
   return (
-    !isHeightInvalid(formState) && !isWeightInvalid(formState) && !isAgeInvalid(age) && sex !== ''
+    !isHeightInvalid(formState) &&
+    !isWeightInvalid(formState) &&
+    !isBMIInvalid(formState) &&
+    !isAgeInvalid(age) &&
+    sex !== ''
   );
 };
 
@@ -109,4 +150,8 @@ export const isMedicalQuestionnaireValid = (formState: FormState): boolean => {
   const { smoking, bloodPressureMed, diabetesStatus } = formState;
 
   return smoking !== '' && bloodPressureMed !== '' && diabetesStatus !== '';
+};
+
+export const isFormValid = (formState: FormState): boolean => {
+  return isProfileInfoValid(formState) && isMedicalQuestionnaireValid(formState);
 };
