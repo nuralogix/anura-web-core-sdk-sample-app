@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Heading, Button, Card, Paragraph } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
 import ProfileInfo from './ProfileInfo';
 import MedicalQuestionnaire from './MedicalQuestionnaire';
-import { FormState } from './types';
+import { FormState, WizardStep } from './types';
 import { isProfileInfoValid, isMedicalQuestionnaireValid } from './validationUtils';
-import { INITIAL_FORM_STATE } from './constants';
+import { INITIAL_FORM_STATE, WIZARD_STEPS } from './constants';
 
 const styles = stylex.create({
   wrapper: {
@@ -38,33 +38,20 @@ const styles = stylex.create({
   },
 });
 
-type WizardStep = 'profile' | 'medical';
-
 const FormWizard = () => {
   const { t } = useTranslation();
-  const [currentStep, setCurrentStep] = useState<WizardStep>('profile');
+  const [currentStep, setCurrentStep] = useState<WizardStep>(WIZARD_STEPS.PROFILE);
   const [formState, setFormState] = useState<FormState>(INITIAL_FORM_STATE);
 
-  // Clear height and weight values when unit changes
-  useEffect(() => {
-    setFormState((prev) => ({
-      ...prev,
-      heightMetric: '',
-      heightFeet: '',
-      heightInches: '',
-      weight: '',
-    }));
-  }, [formState.unit]);
-
   const handleNextStep = () => {
-    if (currentStep === 'profile' && isProfileInfoValid(formState)) {
-      setCurrentStep('medical');
+    if (currentStep === WIZARD_STEPS.PROFILE && isProfileInfoValid(formState)) {
+      setCurrentStep(WIZARD_STEPS.MEDICAL);
     }
   };
 
   const handlePreviousStep = () => {
-    if (currentStep === 'medical') {
-      setCurrentStep('profile');
+    if (currentStep === WIZARD_STEPS.MEDICAL) {
+      setCurrentStep(WIZARD_STEPS.PROFILE);
     }
   };
 
@@ -75,9 +62,9 @@ const FormWizard = () => {
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case 'profile':
+      case WIZARD_STEPS.PROFILE:
         return <ProfileInfo formState={formState} setFormState={setFormState} />;
-      case 'medical':
+      case WIZARD_STEPS.MEDICAL:
         return <MedicalQuestionnaire formState={formState} setFormState={setFormState} />;
       default:
         return null;
@@ -85,21 +72,21 @@ const FormWizard = () => {
   };
 
   const renderButtons = () => {
-    if (currentStep === 'profile') {
+    if (currentStep === WIZARD_STEPS.PROFILE) {
       return (
         <div {...stylex.props(styles.singleButton)}>
           <Button onClick={handleNextStep} disabled={!isProfileInfoValid(formState)}>
-            Next
+            {t('NEXT')}
           </Button>
         </div>
       );
     }
 
-    if (currentStep === 'medical') {
+    if (currentStep === WIZARD_STEPS.MEDICAL) {
       return (
         <div {...stylex.props(styles.buttonWrapper)}>
           <Button variant="outline" onClick={handlePreviousStep}>
-            Previous
+            {t('PREVIOUS')}
           </Button>
           <Button onClick={handleSubmit} disabled={!isMedicalQuestionnaireValid(formState)}>
             {t('PROFILE_FORM_SUBMIT_BUTTON')}
@@ -111,12 +98,10 @@ const FormWizard = () => {
 
   const getStepTitle = (): string => {
     switch (currentStep) {
-      case 'profile':
-        return 'Basic Information';
-      case 'medical':
-        return 'Health Questions';
-      default:
-        return t('PROFILE_FORM_TITLE') as string;
+      case WIZARD_STEPS.PROFILE:
+        return t('PROFILE_FORM_STEP_1_TITLE');
+      case WIZARD_STEPS.MEDICAL:
+        return t('PROFILE_FORM_STEP_2_TITLE');
     }
   };
 

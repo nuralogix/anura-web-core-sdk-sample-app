@@ -51,3 +51,9 @@ export const WEIGHT_METRIC_MAX = 300; // kg
 
 export const WEIGHT_IMPERIAL_MIN = 66; // lbs (roughly 30kg)
 export const WEIGHT_IMPERIAL_MAX = 661; // lbs (roughly 300kg)
+
+// Wizard step constants
+export const WIZARD_STEPS = {
+  PROFILE: 'profile',
+  MEDICAL: 'medical',
+} as const;
