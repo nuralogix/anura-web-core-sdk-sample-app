@@ -3,30 +3,30 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 
-interface SexSelectorProps {
+interface SmokingFieldProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-const SexSelector: React.FC<SexSelectorProps> = ({ value, onChange }) => {
+const SmokingField: React.FC<SmokingFieldProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
-  const sexOptions = [
-    { value: 'male', label: t('MALE') },
-    { value: 'female', label: t('FEMALE') },
+  const smokingOptions = [
+    { value: 'yes', label: t('YES') },
+    { value: 'no', label: t('NO') },
   ];
 
   return (
     <FieldWrapper>
       <RadioButtonGroup
         direction="row"
-        label={t('PROFILE_FORM_SEX_LABEL')}
+        label={t('PROFILE_FORM_SMOKING_LABEL')}
         value={value}
         onChange={onChange}
-        options={sexOptions}
+        options={smokingOptions}
       />
     </FieldWrapper>
   );
 };
 
-export default SexSelector;
+export default SmokingField;

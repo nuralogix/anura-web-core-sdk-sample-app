@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
+import FieldWrapper from '../FieldWrapper';
 
 interface WeightFieldProps {
   value: string;
@@ -31,25 +32,27 @@ const WeightField: React.FC<WeightFieldProps> = ({ value, onChange, isMetric }) 
   };
 
   return (
-    <TextInput
-      label={t(
-        isMetric ? 'PROFILE_FORM_WEIGHT_LABEL_METRIC' : 'PROFILE_FORM_WEIGHT_LABEL_IMPERIAL'
-      )}
-      value={value}
-      onChange={handleChange}
-      placeholder={t(
-        isMetric
-          ? 'PROFILE_FORM_WEIGHT_PLACEHOLDER_METRIC'
-          : 'PROFILE_FORM_WEIGHT_PLACEHOLDER_IMPERIAL'
-      )}
-      invalid={touched && isInvalid()}
-      invalidMessage={t(
-        isMetric
-          ? 'PROFILE_FORM_VALIDATION_WEIGHT_METRIC'
-          : 'PROFILE_FORM_VALIDATION_WEIGHT_IMPERIAL'
-      )}
-      onBlur={handleBlur}
-    />
+    <FieldWrapper>
+      <TextInput
+        label={t(
+          isMetric ? 'PROFILE_FORM_WEIGHT_LABEL_METRIC' : 'PROFILE_FORM_WEIGHT_LABEL_IMPERIAL'
+        )}
+        value={value}
+        onChange={handleChange}
+        placeholder={t(
+          isMetric
+            ? 'PROFILE_FORM_WEIGHT_PLACEHOLDER_METRIC'
+            : 'PROFILE_FORM_WEIGHT_PLACEHOLDER_IMPERIAL'
+        )}
+        invalid={touched && isInvalid()}
+        invalidMessage={t(
+          isMetric
+            ? 'PROFILE_FORM_VALIDATION_WEIGHT_METRIC'
+            : 'PROFILE_FORM_VALIDATION_WEIGHT_IMPERIAL'
+        )}
+        onBlur={handleBlur}
+      />
+    </FieldWrapper>
   );
 };
 

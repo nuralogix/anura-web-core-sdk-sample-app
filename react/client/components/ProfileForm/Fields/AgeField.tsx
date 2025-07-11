@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
+import FieldWrapper from '../FieldWrapper';
 
 interface AgeFieldProps {
   value: string;
@@ -26,15 +27,17 @@ const AgeField: React.FC<AgeFieldProps> = ({ value, onChange }) => {
   };
 
   return (
-    <TextInput
-      label={t('PROFILE_FORM_AGE_LABEL')}
-      value={value}
-      onChange={handleChange}
-      placeholder={t('PROFILE_FORM_AGE_PLACEHOLDER')}
-      invalid={touched && isInvalid()}
-      invalidMessage={t('PROFILE_FORM_VALIDATION_AGE')}
-      onBlur={handleBlur}
-    />
+    <FieldWrapper>
+      <TextInput
+        label={t('PROFILE_FORM_AGE_LABEL')}
+        value={value}
+        onChange={handleChange}
+        placeholder={t('PROFILE_FORM_AGE_PLACEHOLDER')}
+        invalid={touched && isInvalid()}
+        invalidMessage={t('PROFILE_FORM_VALIDATION_AGE')}
+        onBlur={handleBlur}
+      />
+    </FieldWrapper>
   );
 };
 

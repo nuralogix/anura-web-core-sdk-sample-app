@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import * as stylex from '@stylexjs/stylex';
+import FieldWrapper from '../FieldWrapper';
 
 const styles = stylex.create({
   container: {
@@ -60,32 +61,34 @@ const ImperialHeightField: React.FC<ImperialHeightFieldProps> = ({
   };
 
   return (
-    <div {...stylex.props(styles.container)}>
-      <div {...stylex.props(styles.inputWrapper)}>
-        <TextInput
-          label={t('PROFILE_FORM_HEIGHT_FEET_LABEL')}
-          value={feet}
-          onChange={handleFeetChange}
-          placeholder="5"
-          type="text"
-          invalid={feetTouched && isFeetInvalid()}
-          invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_FEET')}
-          onBlur={handleFeetBlur}
-        />
+    <FieldWrapper>
+      <div {...stylex.props(styles.container)}>
+        <div {...stylex.props(styles.inputWrapper)}>
+          <TextInput
+            label={t('PROFILE_FORM_HEIGHT_FEET_LABEL')}
+            value={feet}
+            onChange={handleFeetChange}
+            placeholder={t('PROFILE_FORM_HEIGHT_FEET_PLACEHOLDER')}
+            type="text"
+            invalid={feetTouched && isFeetInvalid()}
+            invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_FEET')}
+            onBlur={handleFeetBlur}
+          />
+        </div>
+        <div {...stylex.props(styles.inputWrapper)}>
+          <TextInput
+            label={t('PROFILE_FORM_HEIGHT_INCHES_LABEL')}
+            value={inches}
+            onChange={handleInchesChange}
+            placeholder={t('PROFILE_FORM_HEIGHT_INCHES_PLACEHOLDER')}
+            type="text"
+            invalid={inchesTouched && isInchesInvalid()}
+            invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_INCHES')}
+            onBlur={handleInchesBlur}
+          />
+        </div>
       </div>
-      <div {...stylex.props(styles.inputWrapper)}>
-        <TextInput
-          label={t('PROFILE_FORM_HEIGHT_INCHES_LABEL')}
-          value={inches}
-          onChange={handleInchesChange}
-          placeholder="11"
-          type="text"
-          invalid={inchesTouched && isInchesInvalid()}
-          invalidMessage={t('PROFILE_FORM_VALIDATION_HEIGHT_INCHES')}
-          onBlur={handleInchesBlur}
-        />
-      </div>
-    </div>
+    </FieldWrapper>
   );
 };
 

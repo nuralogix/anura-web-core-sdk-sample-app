@@ -1,5 +1,4 @@
 import React from 'react';
-import FormField from './FormField';
 import MetricHeightField from './Fields/MetricHeightField';
 import ImperialHeightField from './Fields/ImperialHeightField';
 import AgeField from './Fields/AgeField';
@@ -46,34 +45,20 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
 
   return (
     <>
-      <FormField>
-        <AgeField value={formState.age} onChange={handleAgeChange} />
-      </FormField>
-
-      <FormField>
-        <UnitSelector value={formState.unit} onChange={handleUnitChange} />
-      </FormField>
-
-      <FormField>
-        {isMetric ? (
-          <MetricHeightField value={formState.heightMetric} onChange={handleHeightMetricChange} />
-        ) : (
-          <ImperialHeightField
-            feet={formState.heightFeet}
-            inches={formState.heightInches}
-            onFeetChange={handleHeightFeetChange}
-            onInchesChange={handleHeightInchesChange}
-          />
-        )}
-      </FormField>
-
-      <FormField>
-        <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
-      </FormField>
-
-      <FormField>
-        <SexSelector value={formState.sex} onChange={handleSexChange} />
-      </FormField>
+      <AgeField value={formState.age} onChange={handleAgeChange} />
+      <UnitSelector value={formState.unit} onChange={handleUnitChange} />
+      {isMetric ? (
+        <MetricHeightField value={formState.heightMetric} onChange={handleHeightMetricChange} />
+      ) : (
+        <ImperialHeightField
+          feet={formState.heightFeet}
+          inches={formState.heightInches}
+          onFeetChange={handleHeightFeetChange}
+          onInchesChange={handleHeightInchesChange}
+        />
+      )}
+      <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
+      <SexSelector value={formState.sex} onChange={handleSexChange} />
     </>
   );
 };

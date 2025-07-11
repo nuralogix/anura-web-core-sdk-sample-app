@@ -1,6 +1,7 @@
 import React from 'react';
 import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
+import FieldWrapper from '../FieldWrapper';
 
 interface UnitSelectorProps {
   value: 'metric' | 'imperial';
@@ -20,13 +21,15 @@ const UnitSelector: React.FC<UnitSelectorProps> = ({ value, onChange }) => {
   };
 
   return (
-    <RadioButtonGroup
-      direction="row"
-      label={t('PROFILE_FORM_UNIT_LABEL')}
-      value={value}
-      onChange={handleChange}
-      options={unitOptions}
-    />
+    <FieldWrapper>
+      <RadioButtonGroup
+        direction="row"
+        label={t('PROFILE_FORM_UNIT_LABEL')}
+        value={value}
+        onChange={handleChange}
+        options={unitOptions}
+      />
+    </FieldWrapper>
   );
 };
 

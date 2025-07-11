@@ -3,30 +3,31 @@ import { RadioButtonGroup } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
 
-interface SexSelectorProps {
+interface DiabetesStatusFieldProps {
   value: string;
   onChange: (value: string) => void;
 }
 
-const SexSelector: React.FC<SexSelectorProps> = ({ value, onChange }) => {
+const DiabetesStatusField: React.FC<DiabetesStatusFieldProps> = ({ value, onChange }) => {
   const { t } = useTranslation();
 
-  const sexOptions = [
-    { value: 'male', label: t('MALE') },
-    { value: 'female', label: t('FEMALE') },
+  const diabetesStatusOptions = [
+    { value: 'type1', label: t('TYPE_1') },
+    { value: 'type2', label: t('TYPE_2') },
+    { value: 'no', label: t('NO') },
   ];
 
   return (
     <FieldWrapper>
       <RadioButtonGroup
         direction="row"
-        label={t('PROFILE_FORM_SEX_LABEL')}
+        label={t('PROFILE_FORM_DIABETES_LABEL')}
         value={value}
         onChange={onChange}
-        options={sexOptions}
+        options={diabetesStatusOptions}
       />
     </FieldWrapper>
   );
 };
 
-export default SexSelector;
+export default DiabetesStatusField;

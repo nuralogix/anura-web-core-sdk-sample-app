@@ -3,19 +3,19 @@ import * as stylex from '@stylexjs/stylex';
 
 const styles = stylex.create({
   fieldWrapper: {
-    marginBottom: '24px',
+    marginBottom: '16px',
     minHeight: '60px',
     display: 'flex',
     flexDirection: 'column',
   },
 });
 
-interface FormFieldProps {
+interface FieldWrapperProps {
   children: React.ReactNode;
 }
 
-const FormField: React.FC<FormFieldProps> = ({ children }) => {
+const FieldWrapper: React.FC<FieldWrapperProps> = ({ children }) => {
   return <div {...stylex.props(styles.fieldWrapper)}>{children}</div>;
 };
 
-export default FormField;
+export default FieldWrapper;
