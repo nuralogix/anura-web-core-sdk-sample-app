@@ -15,8 +15,6 @@ import {
 } from './constants';
 import { FormState } from './types';
 
-// TODO investtigate BMI validation
-
 // Utility to create a blur handler that strips spaces and sets touched state
 export const createFieldBlurHandler = (
   value: string,

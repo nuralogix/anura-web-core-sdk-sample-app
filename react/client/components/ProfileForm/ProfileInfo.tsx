@@ -1,4 +1,7 @@
 import React from 'react';
+import { Button } from '@nuralogix.ai/web-ui';
+import * as stylex from '@stylexjs/stylex';
+import { useTranslation } from 'react-i18next';
 import {
   MetricHeightField,
   ImperialHeightField,
@@ -9,13 +12,24 @@ import {
 } from './Fields';
 import { FormState, Unit, Sex } from './types';
 import { FORM_VALUES } from './constants';
+import { isProfileInfoValid } from './validationUtils';
+
+const styles = stylex.create({
+  nextButton: {
+    marginTop: '32px',
+    display: 'flex',
+    justifyContent: 'center',
+  },
+});
 
 interface ProfileInfoProps {
   formState: FormState;
   setFormState: React.Dispatch<React.SetStateAction<FormState>>;
+  onNext: () => void;
 }
 
-const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) => {
+const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNext }) => {
+  const { t } = useTranslation();
   const isMetric = formState.unit === FORM_VALUES.METRIC;
 
   const handleAgeChange = (value: string) => {
@@ -62,6 +76,11 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState }) =>
         />
       )}
       <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
+      <div {...stylex.props(styles.nextButton)}>
+        <Button width="100%" onClick={onNext} disabled={!isProfileInfoValid(formState)}>
+          {t('NEXT')}
+        </Button>
+      </div>
     </>
   );
 };
