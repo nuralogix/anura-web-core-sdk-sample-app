@@ -97,3 +97,18 @@ export const isFormValid = (formState: FormState): boolean => {
     diabetesStatus !== ''
   );
 };
+
+// Step-specific validation functions
+export const isProfileInfoValid = (formState: FormState): boolean => {
+  const { age, sex } = formState;
+
+  return (
+    !isHeightInvalid(formState) && !isWeightInvalid(formState) && !isAgeInvalid(age) && sex !== ''
+  );
+};
+
+export const isMedicalQuestionnaireValid = (formState: FormState): boolean => {
+  const { smoking, bloodPressureMed, diabetesStatus } = formState;
+
+  return smoking !== '' && bloodPressureMed !== '' && diabetesStatus !== '';
+};
