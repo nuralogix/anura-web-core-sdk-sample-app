@@ -8,38 +8,13 @@ const styles = stylex.create({
     display: 'flex',
     flexDirection: 'column',
   },
-  fieldRow: {
-    marginBottom: '24px',
-    minHeight: '60px',
-    display: 'flex',
-    flexDirection: 'row',
-    gap: '16px',
-  },
-  fieldRowItem: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-  },
 });
 
 interface FormFieldProps {
   children: React.ReactNode;
-  layout?: 'column' | 'row';
 }
 
-const FormField: React.FC<FormFieldProps> = ({ children, layout = 'column' }) => {
-  if (layout === 'row') {
-    return (
-      <div {...stylex.props(styles.fieldRow)}>
-        {React.Children.map(children, (child, index) => (
-          <div key={index} {...stylex.props(styles.fieldRowItem)}>
-            {child}
-          </div>
-        ))}
-      </div>
-    );
-  }
-
+const FormField: React.FC<FormFieldProps> = ({ children }) => {
   return <div {...stylex.props(styles.fieldWrapper)}>{children}</div>;
 };
 
