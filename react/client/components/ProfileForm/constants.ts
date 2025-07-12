@@ -24,18 +24,32 @@ export const FORM_VALUES = {
   DIABETES_NONE: faceAttributeValue.DIABETES_NONE.toString(),
 } as const;
 
+// Form field key constants
+export const FORM_FIELDS = {
+  UNIT: 'unit',
+  HEIGHT_METRIC: 'heightMetric',
+  HEIGHT_FEET: 'heightFeet',
+  HEIGHT_INCHES: 'heightInches',
+  WEIGHT: 'weight',
+  AGE: 'age',
+  SEX: 'sex',
+  SMOKING: 'smoking',
+  BLOOD_PRESSURE_MED: 'bloodPressureMed',
+  DIABETES_STATUS: 'diabetesStatus',
+} as const;
+
 // Initial form state
 export const INITIAL_FORM_STATE: FormState = {
-  unit: FORM_VALUES.METRIC,
-  heightMetric: '',
-  heightFeet: '',
-  heightInches: '',
-  weight: '',
-  age: '',
-  sex: '',
-  smoking: '',
-  bloodPressureMed: '',
-  diabetesStatus: '',
+  [FORM_FIELDS.UNIT]: FORM_VALUES.METRIC,
+  [FORM_FIELDS.HEIGHT_METRIC]: '',
+  [FORM_FIELDS.HEIGHT_FEET]: '',
+  [FORM_FIELDS.HEIGHT_INCHES]: '',
+  [FORM_FIELDS.WEIGHT]: '',
+  [FORM_FIELDS.AGE]: '',
+  [FORM_FIELDS.SEX]: '',
+  [FORM_FIELDS.SMOKING]: '',
+  [FORM_FIELDS.BLOOD_PRESSURE_MED]: '',
+  [FORM_FIELDS.DIABETES_STATUS]: '',
 };
 
 // Validation bounds

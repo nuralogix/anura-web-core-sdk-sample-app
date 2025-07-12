@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Heading, Card, Paragraph } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import ProfileInfo from './ProfileInfo';
 import MedicalQuestionnaire from './MedicalQuestionnaire';
 import { FormState, WizardStep } from './types';
 import { isFormValid } from './validationUtils';
-import { INITIAL_FORM_STATE, WIZARD_STEPS } from './constants';
+import { INITIAL_FORM_STATE, WIZARD_STEPS, FORM_FIELDS } from './constants';
 import { convertFormStateToSDKDemographics } from './utils';
 import { useNavigate } from 'react-router';
 import state from '../../state';
@@ -41,10 +41,10 @@ const FormWizard = () => {
   useEffect(() => {
     setFormState((prev) => ({
       ...prev,
-      heightMetric: '',
-      heightFeet: '',
-      heightInches: '',
-      weight: '',
+      [FORM_FIELDS.HEIGHT_METRIC]: '',
+      [FORM_FIELDS.HEIGHT_FEET]: '',
+      [FORM_FIELDS.HEIGHT_INCHES]: '',
+      [FORM_FIELDS.WEIGHT]: '',
     }));
   }, [formState.unit]);
 
@@ -57,28 +57,22 @@ const FormWizard = () => {
   };
 
   const handleSubmit = () => {
-    // Defensive validation check
+    // Defensive validation check but disabled btns should prevent this
     if (!isFormValid(formState)) {
-      console.warn('Form submission attempted with invalid data');
+      // TODO: Show error notification to user if needed
       return;
     }
 
-    try {
-      // Convert form data to SDK format
-      const demographicsData = convertFormStateToSDKDemographics(formState);
+    // Convert form data to SDK format before pushing to store
+    const demographicsData = convertFormStateToSDKDemographics(formState);
 
-      // Update the demographics store
-      state.demographics.setDemographics(demographicsData);
+    // Update the demographics store
+    state.demographics.setDemographics(demographicsData);
 
-      console.log('Form submitted successfully:', formState);
-      console.log('Converted demographics:', demographicsData);
+    // console.log('Set demographics from form:', demographicsData);
 
-      // Navigate to measurement page
-      navigate('/');
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      // TODO: Show error notification to user
-    }
+    // Navigate to measurement page
+    navigate('/');
   };
 
   return (

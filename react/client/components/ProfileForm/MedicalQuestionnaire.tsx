@@ -3,8 +3,10 @@ import { Button } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
 import { SmokingField, BloodPressureMedField, DiabetesStatusField } from './Fields';
-import { FormState, SmokingStatus, BloodPressureMedStatus, DiabetesStatus } from './types';
+import { FormState } from './types';
 import { isMedicalQuestionnaireValid } from './validationUtils';
+import { createFieldHandler } from './utils';
+import { FORM_FIELDS } from './constants';
 
 const styles = stylex.create({
   buttonWrapper: {
@@ -31,26 +33,20 @@ const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({
 }) => {
   const { t } = useTranslation();
 
-  const handleSmokingChange = (value: SmokingStatus) => {
-    setFormState((prev) => ({ ...prev, smoking: value }));
-  };
-
-  const handleBloodPressureMedChange = (value: BloodPressureMedStatus) => {
-    setFormState((prev) => ({ ...prev, bloodPressureMed: value }));
-  };
-
-  const handleDiabetesStatusChange = (value: DiabetesStatus) => {
-    setFormState((prev) => ({ ...prev, diabetesStatus: value }));
-  };
-
   return (
     <>
-      <SmokingField value={formState.smoking} onChange={handleSmokingChange} />
+      <SmokingField
+        value={formState.smoking}
+        onChange={createFieldHandler(FORM_FIELDS.SMOKING, setFormState)}
+      />
       <BloodPressureMedField
         value={formState.bloodPressureMed}
-        onChange={handleBloodPressureMedChange}
+        onChange={createFieldHandler(FORM_FIELDS.BLOOD_PRESSURE_MED, setFormState)}
       />
-      <DiabetesStatusField value={formState.diabetesStatus} onChange={handleDiabetesStatusChange} />
+      <DiabetesStatusField
+        value={formState.diabetesStatus}
+        onChange={createFieldHandler(FORM_FIELDS.DIABETES_STATUS, setFormState)}
+      />
       <div {...stylex.props(styles.buttonWrapper)}>
         <Button width="100%" onClick={onSubmit} disabled={!isMedicalQuestionnaireValid(formState)}>
           {t('PROFILE_FORM_SUBMIT_BUTTON')}

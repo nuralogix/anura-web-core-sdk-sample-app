@@ -1,4 +1,4 @@
-import { FORM_VALUES, WIZARD_STEPS } from './constants';
+import { FORM_VALUES, WIZARD_STEPS, FORM_FIELDS } from './constants';
 
 export type Unit = typeof FORM_VALUES.METRIC | typeof FORM_VALUES.IMPERIAL;
 
@@ -20,14 +20,14 @@ export type DiabetesStatus =
 export type WizardStep = typeof WIZARD_STEPS.PROFILE | typeof WIZARD_STEPS.MEDICAL;
 
 export interface FormState {
-  unit: Unit;
-  heightMetric: string;
-  heightFeet: string; // For imperial only
-  heightInches: string; // For imperial only
-  weight: string;
-  age: string;
-  sex: Sex;
-  smoking: SmokingStatus;
-  bloodPressureMed: BloodPressureMedStatus;
-  diabetesStatus: DiabetesStatus;
+  [FORM_FIELDS.UNIT]: Unit;
+  [FORM_FIELDS.HEIGHT_METRIC]: string;
+  [FORM_FIELDS.HEIGHT_FEET]: string; // For imperial only
+  [FORM_FIELDS.HEIGHT_INCHES]: string; // For imperial only
+  [FORM_FIELDS.WEIGHT]: string;
+  [FORM_FIELDS.AGE]: string;
+  [FORM_FIELDS.SEX]: Sex;
+  [FORM_FIELDS.SMOKING]: SmokingStatus;
+  [FORM_FIELDS.BLOOD_PRESSURE_MED]: BloodPressureMedStatus;
+  [FORM_FIELDS.DIABETES_STATUS]: DiabetesStatus;
 }

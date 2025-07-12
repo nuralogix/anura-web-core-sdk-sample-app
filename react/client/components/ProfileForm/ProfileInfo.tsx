@@ -10,9 +10,10 @@ import {
   WeightField,
   SexSelector,
 } from './Fields';
-import { FormState, Unit, Sex } from './types';
-import { FORM_VALUES } from './constants';
+import { FormState } from './types';
+import { FORM_VALUES, FORM_FIELDS } from './constants';
 import { isProfileInfoValid, showBMIError } from './validationUtils';
+import { createFieldHandler } from './utils';
 
 const styles = stylex.create({
   nextButton: {
@@ -35,55 +36,43 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
   const { t } = useTranslation();
   const isMetric = formState.unit === FORM_VALUES.METRIC;
 
-  const handleAgeChange = (value: string) => {
-    setFormState((prev) => ({ ...prev, age: value }));
-  };
-
-  const handleUnitChange = (value: Unit) => {
-    setFormState((prev) => ({ ...prev, unit: value }));
-  };
-
-  const handleHeightMetricChange = (value: string) => {
-    setFormState((prev) => ({ ...prev, heightMetric: value }));
-  };
-
-  const handleHeightFeetChange = (value: string) => {
-    setFormState((prev) => ({ ...prev, heightFeet: value }));
-  };
-
-  const handleHeightInchesChange = (value: string) => {
-    setFormState((prev) => ({ ...prev, heightInches: value }));
-  };
-
-  const handleWeightChange = (value: string) => {
-    setFormState((prev) => ({ ...prev, weight: value }));
-  };
-
-  const handleSexSelection = (value: Sex) => {
-    setFormState((prev) => ({ ...prev, sex: value }));
-  };
-
   return (
     <>
-      <SexSelector value={formState.sex} onChange={handleSexSelection} />
-      <AgeField value={formState.age} onChange={handleAgeChange} />
-      <UnitSelector value={formState.unit} onChange={handleUnitChange} />
+      <SexSelector
+        value={formState.sex}
+        onChange={createFieldHandler(FORM_FIELDS.SEX, setFormState)}
+      />
+      <AgeField
+        value={formState.age}
+        onChange={createFieldHandler(FORM_FIELDS.AGE, setFormState)}
+      />
+      <UnitSelector
+        value={formState.unit}
+        onChange={createFieldHandler(FORM_FIELDS.UNIT, setFormState)}
+      />
       {showBMIError(formState) && (
         <div {...stylex.props(styles.bmiError)}>
           <Paragraph>{t('PROFILE_FORM_VALIDATION_BMI')}</Paragraph>
         </div>
       )}
       {isMetric ? (
-        <MetricHeightField value={formState.heightMetric} onChange={handleHeightMetricChange} />
+        <MetricHeightField
+          value={formState.heightMetric}
+          onChange={createFieldHandler(FORM_FIELDS.HEIGHT_METRIC, setFormState)}
+        />
       ) : (
         <ImperialHeightField
           feet={formState.heightFeet}
           inches={formState.heightInches}
-          onFeetChange={handleHeightFeetChange}
-          onInchesChange={handleHeightInchesChange}
+          onFeetChange={createFieldHandler(FORM_FIELDS.HEIGHT_FEET, setFormState)}
+          onInchesChange={createFieldHandler(FORM_FIELDS.HEIGHT_INCHES, setFormState)}
         />
       )}
-      <WeightField value={formState.weight} onChange={handleWeightChange} isMetric={isMetric} />
+      <WeightField
+        value={formState.weight}
+        onChange={createFieldHandler(FORM_FIELDS.WEIGHT, setFormState)}
+        isMetric={isMetric}
+      />
       <div {...stylex.props(styles.nextButton)}>
         <Button width="100%" onClick={onNext} disabled={!isProfileInfoValid(formState)}>
           {t('NEXT')}
