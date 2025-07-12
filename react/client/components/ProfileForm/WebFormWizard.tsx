@@ -7,7 +7,7 @@ import MedicalQuestionnaire from './MedicalQuestionnaire';
 import { FormState, WizardStep } from './types';
 import { isFormValid } from './validationUtils';
 import { INITIAL_FORM_STATE, WIZARD_STEPS } from './constants';
-import { convertFormStateToSDKDemographics } from './conversionUtils';
+import { convertFormStateToSDKDemographics } from './utils';
 import { useNavigate } from 'react-router';
 import state from '../../state';
 

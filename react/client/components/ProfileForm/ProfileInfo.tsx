@@ -12,13 +12,16 @@ import {
 } from './Fields';
 import { FormState, Unit, Sex } from './types';
 import { FORM_VALUES } from './constants';
-import { isProfileInfoValid, isBMIInvalid } from './validationUtils';
+import { isProfileInfoValid, showBMIError } from './validationUtils';
 
 const styles = stylex.create({
   nextButton: {
     marginTop: '32px',
     display: 'flex',
     justifyContent: 'center',
+  },
+  bmiError: {
+    marginTop: '8px',
   },
 });
 
@@ -65,7 +68,11 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
       <SexSelector value={formState.sex} onChange={handleSexSelection} />
       <AgeField value={formState.age} onChange={handleAgeChange} />
       <UnitSelector value={formState.unit} onChange={handleUnitChange} />
-      {isBMIInvalid(formState) && <Paragraph>{t('PROFILE_FORM_VALIDATION_BMI')}</Paragraph>}
+      {showBMIError(formState) && (
+        <div {...stylex.props(styles.bmiError)}>
+          <Paragraph>{t('PROFILE_FORM_VALIDATION_BMI')}</Paragraph>
+        </div>
+      )}
       {isMetric ? (
         <MetricHeightField value={formState.heightMetric} onChange={handleHeightMetricChange} />
       ) : (

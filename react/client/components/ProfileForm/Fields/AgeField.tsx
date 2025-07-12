@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
-import { isAgeInvalid, createFieldBlurHandler } from '../validationUtils';
+import { isAgeInvalid } from '../validationUtils';
+import { createFieldBlurHandler } from '../utils';
 
 interface AgeFieldProps {
   value: string;

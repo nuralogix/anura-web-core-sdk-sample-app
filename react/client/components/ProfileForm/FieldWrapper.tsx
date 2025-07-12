@@ -5,31 +5,22 @@ const styles = stylex.create({
   fieldWrapper: {
     display: 'flex',
     flexDirection: 'column',
-    marginBottom: '16px',
+    marginBottom: '12px',
   },
   // For text inputs - reserves space for validation messages
   textInput: {
     minHeight: '90px', // Label + input + validation message space
   },
-  // For radio buttons - compact spacing
-  radioButton: {
-    minHeight: '40px', // Just label + radio buttons
-  },
 });
 
 interface FieldWrapperProps {
   children: React.ReactNode;
-  variant?: 'textInput' | 'radioButton';
+  variant?: 'textInput';
 }
 
-const FieldWrapper: React.FC<FieldWrapperProps> = ({ children, variant = 'radioButton' }) => {
+const FieldWrapper: React.FC<FieldWrapperProps> = ({ children, variant }) => {
   return (
-    <div
-      {...stylex.props(
-        styles.fieldWrapper,
-        variant === 'textInput' ? styles.textInput : styles.radioButton
-      )}
-    >
+    <div {...stylex.props(styles.fieldWrapper, variant === 'textInput' && styles.textInput)}>
       {children}
     </div>
   );
