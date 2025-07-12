@@ -33,18 +33,20 @@ const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({
 }) => {
   const { t } = useTranslation();
 
+  const { smoking, bloodPressureMed, diabetesStatus } = formState;
+
   return (
     <>
       <SmokingField
-        value={formState.smoking}
+        value={smoking}
         onChange={createFieldHandler(FORM_FIELDS.SMOKING, setFormState)}
       />
       <BloodPressureMedField
-        value={formState.bloodPressureMed}
+        value={bloodPressureMed}
         onChange={createFieldHandler(FORM_FIELDS.BLOOD_PRESSURE_MED, setFormState)}
       />
       <DiabetesStatusField
-        value={formState.diabetesStatus}
+        value={diabetesStatus}
         onChange={createFieldHandler(FORM_FIELDS.DIABETES_STATUS, setFormState)}
       />
       <div {...stylex.props(styles.buttonWrapper)}>

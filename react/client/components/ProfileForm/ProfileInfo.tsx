@@ -36,20 +36,13 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
   const { t } = useTranslation();
   const isMetric = formState.unit === FORM_VALUES.METRIC;
 
+  const { sex, age, unit, heightMetric, heightFeet, heightInches, weight } = formState;
+
   return (
     <>
-      <SexSelector
-        value={formState.sex}
-        onChange={createFieldHandler(FORM_FIELDS.SEX, setFormState)}
-      />
-      <AgeField
-        value={formState.age}
-        onChange={createFieldHandler(FORM_FIELDS.AGE, setFormState)}
-      />
-      <UnitSelector
-        value={formState.unit}
-        onChange={createFieldHandler(FORM_FIELDS.UNIT, setFormState)}
-      />
+      <SexSelector value={sex} onChange={createFieldHandler(FORM_FIELDS.SEX, setFormState)} />
+      <AgeField value={age} onChange={createFieldHandler(FORM_FIELDS.AGE, setFormState)} />
+      <UnitSelector value={unit} onChange={createFieldHandler(FORM_FIELDS.UNIT, setFormState)} />
       {showBMIError(formState) && (
         <div {...stylex.props(styles.bmiError)}>
           <Paragraph>{t('PROFILE_FORM_VALIDATION_BMI')}</Paragraph>
@@ -57,19 +50,19 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
       )}
       {isMetric ? (
         <MetricHeightField
-          value={formState.heightMetric}
+          value={heightMetric}
           onChange={createFieldHandler(FORM_FIELDS.HEIGHT_METRIC, setFormState)}
         />
       ) : (
         <ImperialHeightField
-          feet={formState.heightFeet}
-          inches={formState.heightInches}
+          feet={heightFeet}
+          inches={heightInches}
           onFeetChange={createFieldHandler(FORM_FIELDS.HEIGHT_FEET, setFormState)}
           onInchesChange={createFieldHandler(FORM_FIELDS.HEIGHT_INCHES, setFormState)}
         />
       )}
       <WeightField
-        value={formState.weight}
+        value={weight}
         onChange={createFieldHandler(FORM_FIELDS.WEIGHT, setFormState)}
         isMetric={isMetric}
       />
