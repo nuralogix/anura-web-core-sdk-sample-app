@@ -7,6 +7,7 @@ import { FormState } from './types';
 import { isFormValid } from './utils/validationUtils';
 import { createFieldHandler } from './utils/formUtils';
 import { FORM_FIELDS } from './constants';
+import WizardStepWrapper from './WizardStepWrapper';
 
 const styles = stylex.create({
   buttonWrapper: {
@@ -36,7 +37,7 @@ const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({
   const { smoking, bloodPressureMed, diabetesStatus } = formState;
 
   return (
-    <>
+    <WizardStepWrapper onSubmit={onSubmit} isEnabled={isFormValid(formState)}>
       <SmokingField
         value={smoking}
         onChange={createFieldHandler(FORM_FIELDS.SMOKING, setFormState)}
@@ -57,7 +58,7 @@ const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({
           {t('BACK')}
         </Button>
       </div>
-    </>
+    </WizardStepWrapper>
   );
 };
 

@@ -14,6 +14,7 @@ import { FormState } from './types';
 import { FORM_VALUES, FORM_FIELDS } from './constants';
 import { isProfileInfoValid, showBMIError } from './utils/validationUtils';
 import { createFieldHandler } from './utils/formUtils';
+import WizardStepWrapper from './WizardStepWrapper';
 
 const styles = stylex.create({
   nextButton: {
@@ -39,7 +40,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
   const { sex, age, unit, heightMetric, heightFeet, heightInches, weight } = formState;
 
   return (
-    <>
+    <WizardStepWrapper onSubmit={onNext} isEnabled={isProfileInfoValid(formState)}>
       <SexSelector value={sex} onChange={createFieldHandler(FORM_FIELDS.SEX, setFormState)} />
       <AgeField value={age} onChange={createFieldHandler(FORM_FIELDS.AGE, setFormState)} />
       <UnitSelector value={unit} onChange={createFieldHandler(FORM_FIELDS.UNIT, setFormState)} />
@@ -71,7 +72,7 @@ const ProfileInfo: React.FC<ProfileInfoProps> = ({ formState, setFormState, onNe
           {t('NEXT')}
         </Button>
       </div>
-    </>
+    </WizardStepWrapper>
   );
 };
 
