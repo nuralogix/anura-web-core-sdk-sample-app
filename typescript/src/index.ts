@@ -178,16 +178,15 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             disableButton('toggle-camera', false);
             await measurement.stopTracking();
             mask.setMaskVisibility(false);
+            toggleCameraButton.textContent = 'Open';
         } else {
             const success = await camera.start(1280, 720);
+            toggleCameraButton.textContent = 'Close';
         }
     }
 
     if (toggleCameraButton) {
         toggleCameraButton.addEventListener('click', async () => {
-            toggleCameraButton.textContent === 'Open'
-            ? toggleCameraButton.textContent = 'Close'
-            : toggleCameraButton.textContent = 'Open';
             await toggleCamera();
         });
     }
@@ -246,11 +245,12 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       if (state === faceTrackerState.READY) {
         disableButton('toggle-measurement', false);
         await measurement.startTracking();
+         mask.setLoadingState(false);
       }
       console.log('faceTrackerStateChanged', state);
     };
 
-    measurement.on.resultsReceived = (results: Results) => {
+    measurement.on.resultsReceived = async (results: Results) => {
         const { points, errors, resultsOrder, finalChunkNumber } = results;
             const pointList = Object.keys(points) as DfxPointId[];
             for (const key of pointList) {
@@ -304,6 +304,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             for (const key of pointList) {
                 console.log(`${key} - value: ${points[key]!.value}, dial:`, points[key]!.dial);
             }
+            await toggleCamera();
         }
     };
 
@@ -341,6 +342,9 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {
         if(drawables.face.detected) {
             mask.draw(drawables);
+            if (drawables.percentCompleted >= 100) {
+              mask.setLoadingState(true);
+            }
         } else {
             console.log('No face detected');
         }

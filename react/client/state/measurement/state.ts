@@ -201,6 +201,13 @@ const measurementState: MeasurementState = proxy({
 
     measurement.on.faceTrackerStateChanged = async (state: FaceTrackerState) => {
       measurementState.setTrackerState(state);
+      if (state === faceTrackerState.LOADED) {
+        console.log(measurementState.getVersion());
+      }
+      if (state === faceTrackerState.READY) {
+        await measurementState.startTracking();
+        mask.setLoadingState(false)
+      }
     };
 
     measurement.on.resultsReceived = (results: Results) => {
@@ -305,8 +312,7 @@ const measurementState: MeasurementState = proxy({
           measurementState.isMeasurementInProgress = true;
         }
         if (drawables.percentCompleted >= 100) {
-          mask.setMaskVisibility(false);
-          // cameraState.stop();
+          mask.setLoadingState(true);
           measurementState.isMeasurementInProgress = false;
           measurementState.isAnalyzingResults = true;
         }

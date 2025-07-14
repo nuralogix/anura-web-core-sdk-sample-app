@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@nuralogix.ai/dfx-api-client@^1.0.72":
-  version "1.0.72"
-  resolved "https://registry.yarnpkg.com/@nuralogix.ai/dfx-api-client/-/dfx-api-client-1.0.72.tgz#1269e8d0d956fae2e60bca6fc6f224510da96473"
-  integrity sha512-RSRrjwXR+V0q8H7UXQrIKHY64nOvtibcgleGAG41UV8YY3wwixyXF50jZiZqHOaqc318P6MPC/ktZUsSxSo2kQ==
+"@nuralogix.ai/dfx-api-client@^1.0.73":
+  version "1.0.73"
+  resolved "https://registry.yarnpkg.com/@nuralogix.ai/dfx-api-client/-/dfx-api-client-1.0.73.tgz#529782d7348dd9bcdb1dcef72f8217ad0f53bd2f"
+  integrity sha512-2R1gYZ/smrqvvIXVO8sQfqslfHyini0lVMRnB5YVzpYHZhxHPLp5zJCU1sCFNCY/zZHh4bBfo4gVDy3O+6FGxw==
 
 "@types/body-parser@*":
   version "1.19.6"

@@ -207,14 +207,16 @@
                 );
                 if (isVideoPlaying) {
                     if (videoStream.mediaStream) {
-                    videoStream.mediaStream.getTracks().forEach(track => track.stop());
-                    videoStream.videoElement.pause();
-                    disableButton('toggle-measurement', true);
-                    disableButton('toggle-camera', false);
-                    await measurement.stopTracking();
+                        videoStream.mediaStream.getTracks().forEach(track => track.stop());
+                        videoStream.videoElement.pause();
+                        disableButton('toggle-measurement', true);
+                        disableButton('toggle-camera', false);
+                        await measurement.stopTracking();
+                        toggleVideoButton.textContent = 'Play';
                     }
                 } else {
                     videoStream.init('video/sample.mp4');
+                    toggleVideoButton.textContent = 'Stop';
                 }
             }
 
@@ -231,9 +233,6 @@
 
             if (toggleVideoButton) {
                 toggleVideoButton.addEventListener('click', async () => {
-                    toggleVideoButton.textContent === 'Play'
-                    ? toggleVideoButton.textContent = 'Stop'
-                    : toggleVideoButton.textContent = 'Play';
                     await toggleVideo();
                 });
             }
@@ -292,11 +291,12 @@
                 if (state === faceTrackerState.READY) {
                     disableButton('toggle-measurement', false);
                     await measurement.startTracking();
+                    mask.setLoadingState(false);
                 }
                 console.log('faceTrackerStateChanged', state);
             };
 
-            measurement.on.resultsReceived = results => {
+            measurement.on.resultsReceived = async (results) => {
                 const { points, errors, resultsOrder, finalChunkNumber } = results;
                 const pointList = Object.keys(points);
                 for (const key of pointList) {
@@ -350,16 +350,17 @@
                     resultsTable.classList.remove('is-hidden');
                     const tbody = resultsTable.querySelector('tbody');
                     pointList.forEach(point => {
-                    const row = document.createElement('tr');
-                    const pointCell = document.createElement('td');
-                    pointCell.textContent = point;
-                    const valueCell = document.createElement('td');
-                    valueCell.textContent = points[point].value;
-                    row.appendChild(pointCell);
-                    row.appendChild(valueCell);
-                    tbody.appendChild(row);
-                    console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                        const row = document.createElement('tr');
+                        const pointCell = document.createElement('td');
+                        pointCell.textContent = point;
+                        const valueCell = document.createElement('td');
+                        valueCell.textContent = points[point].value;
+                        row.appendChild(pointCell);
+                        row.appendChild(valueCell);
+                        tbody.appendChild(row);
+                        console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
                     });
+                    await toggleVideo();
                 }
             };
 
@@ -396,6 +397,9 @@
             measurement.on.facialLandmarksUpdated = (drawables) => {
                 if(drawables.face.detected) {
                     mask.draw(drawables);
+                    if (drawables.percentCompleted >= 100) {
+                        mask.setLoadingState(true);
+                    }
                 } else {
                     console.log('No face detected');
                 }
