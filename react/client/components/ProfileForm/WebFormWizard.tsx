@@ -5,9 +5,9 @@ import { useTranslation } from 'react-i18next';
 import ProfileInfo from './ProfileInfo';
 import MedicalQuestionnaire from './MedicalQuestionnaire';
 import { FormState, WizardStep } from './types';
-import { isFormValid } from './validationUtils';
+import { isFormValid } from './utils/validationUtils';
 import { INITIAL_FORM_STATE, WIZARD_STEPS, FORM_FIELDS } from './constants';
-import { convertFormStateToSDKDemographics } from './utils';
+import { convertFormStateToSDKDemographics } from './utils/utils';
 import { useNavigate } from 'react-router';
 import state from '../../state';
 
@@ -26,8 +26,6 @@ const styles = stylex.create({
   },
   introMessage: {
     marginBottom: '24px',
-    fontSize: '14px',
-    lineHeight: '1.4',
   },
 });
 
@@ -69,7 +67,7 @@ const FormWizard = () => {
     // Update the demographics store
     state.demographics.setDemographics(demographicsData);
 
-    // console.log('Set demographics from form:', demographicsData);
+    console.log('Set demographics from form:', demographicsData);
 
     // Navigate to measurement page
     navigate('/');

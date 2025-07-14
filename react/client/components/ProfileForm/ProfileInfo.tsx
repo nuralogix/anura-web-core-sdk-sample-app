@@ -12,8 +12,8 @@ import {
 } from './Fields';
 import { FormState } from './types';
 import { FORM_VALUES, FORM_FIELDS } from './constants';
-import { isProfileInfoValid, showBMIError } from './validationUtils';
-import { createFieldHandler } from './utils';
+import { isProfileInfoValid, showBMIError } from './utils/validationUtils';
+import { createFieldHandler } from './utils/formUtils';
 
 const styles = stylex.create({
   nextButton: {

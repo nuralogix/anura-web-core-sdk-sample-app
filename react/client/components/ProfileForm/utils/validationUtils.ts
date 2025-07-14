@@ -14,8 +14,8 @@ import {
   WEIGHT_IMPERIAL_MAX,
   BMI_MIN,
   BMI_MAX,
-} from './constants';
-import { FormState } from './types';
+} from '../constants';
+import { FormState } from '../types';
 import { getHeightInCm, getWeightInKg } from './utils';
 
 // Generic numeric validation utility

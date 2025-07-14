@@ -3,8 +3,8 @@ import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import * as stylex from '@stylexjs/stylex';
 import FieldWrapper from '../FieldWrapper';
-import { isHeightFeetInvalid, isHeightInchesInvalid } from '../validationUtils';
-import { createFieldBlurHandler } from '../utils';
+import { isHeightFeetInvalid, isHeightInchesInvalid } from '../utils/validationUtils';
+import { createFieldBlurHandler } from '../utils/formUtils';
 
 const styles = stylex.create({
   container: {

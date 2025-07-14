@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { TextInput } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
 import FieldWrapper from '../FieldWrapper';
-import { isWeightMetricInvalid, isWeightImperialInvalid } from '../validationUtils';
-import { createFieldBlurHandler } from '../utils';
+import { isWeightMetricInvalid, isWeightImperialInvalid } from '../utils/validationUtils';
+import { createFieldBlurHandler } from '../utils/formUtils';
 
 interface WeightFieldProps {
   value: string;

@@ -35,8 +35,8 @@ const Navbar: React.FC = () => {
       {/* TODO replace with logo? */}
       <Heading>Anura Web Sample App</Heading>
       <div {...stylex.props(styles.right)}>
-        <Button variant="outline" onClick={toggleLanguage}>
-          {i18n.language === 'en' ? 'FR' : 'EN'}
+        <Button variant="link" onClick={toggleLanguage}>
+          {i18n.language === 'en' ? 'Français' : 'English'}
         </Button>
         {/* TODO replace with toggle */}
         <Button variant="outline" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>

@@ -4,8 +4,8 @@ import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
 import { SmokingField, BloodPressureMedField, DiabetesStatusField } from './Fields';
 import { FormState } from './types';
-import { isMedicalQuestionnaireValid } from './validationUtils';
-import { createFieldHandler } from './utils';
+import { isFormValid } from './utils/validationUtils';
+import { createFieldHandler } from './utils/formUtils';
 import { FORM_FIELDS } from './constants';
 
 const styles = stylex.create({
@@ -50,7 +50,7 @@ const MedicalQuestionnaire: React.FC<MedicalQuestionnaireProps> = ({
         onChange={createFieldHandler(FORM_FIELDS.DIABETES_STATUS, setFormState)}
       />
       <div {...stylex.props(styles.buttonWrapper)}>
-        <Button width="100%" onClick={onSubmit} disabled={!isMedicalQuestionnaireValid(formState)}>
+        <Button width="100%" onClick={onSubmit} disabled={!isFormValid(formState)}>
           {t('PROFILE_FORM_SUBMIT_BUTTON')}
         </Button>
         <Button variant="link" onClick={onBack}>
