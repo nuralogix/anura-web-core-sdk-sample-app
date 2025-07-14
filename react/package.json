@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-alpha.21",
-    "@nuralogix.ai/web-ui": "^0.1.0-alpha.9",
+    "@nuralogix.ai/web-ui": "^0.1.0-alpha.10",
     "@stylexjs/stylex": "0.9.3",
     "i18next": "^24.2.3",
     "i18next-http-backend": "^3.0.2",

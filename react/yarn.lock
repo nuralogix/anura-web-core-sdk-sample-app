@@ -1154,10 +1154,10 @@
   resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-alpha.21.tgz#231891a8ed4df461d728df986ea21e1a75299491"
   integrity sha512-IP2LZm2lVpZOoivXWRTep5xJVY0Dafi80BVCuvKFOFh8RdrwMUE6GD3LkeG4P2kNxcFqFBptixuXPSeDvce5IQ==
 
-"@nuralogix.ai/web-ui@^0.1.0-alpha.9":
-  version "0.1.0-alpha.9"
-  resolved "https://registry.yarnpkg.com/@nuralogix.ai/web-ui/-/web-ui-0.1.0-alpha.9.tgz#1288c8d1e3bdcf0912efa68464fe8d2ab1514721"
-  integrity sha512-buFX0buQDKBhsS4oBPntO6mXcm0twNpCAg0K8otR3menq2W6jh5tLCP+ftzrVTAyNNL7sTyCgmesWgnBzrj1wg==
+"@nuralogix.ai/web-ui@^0.1.0-alpha.10":
+  version "0.1.0-alpha.10"
+  resolved "https://registry.yarnpkg.com/@nuralogix.ai/web-ui/-/web-ui-0.1.0-alpha.10.tgz#afbed71ccbd4a6a90557db2c93d3faeffcd573cb"
+  integrity sha512-iLCPrYmiK6eIt4YB6x8tGraBQEsHyKP9asYnbvC5rhWQfPdUxc3wOZWJzeRtBjDjvn/aRrdUa2Whu3IqqRpucA==
 
 "@rollup/plugin-commonjs@^28.0.2":
   version "28.0.6"
