@@ -70,7 +70,7 @@ const FormWizard = () => {
     console.log('Set demographics from form:', demographicsData);
 
     // Navigate to measurement page
-    navigate('/');
+    navigate('/measure');
   };
 
   return (
