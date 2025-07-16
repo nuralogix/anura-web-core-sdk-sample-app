@@ -2,7 +2,8 @@ import React from 'react';
 import * as stylex from '@stylexjs/stylex';
 import { useSnapshot } from 'valtio';
 import state from '../../state';
-import { Button } from '@nuralogix.ai/web-ui';
+import { Button, Heading } from '@nuralogix.ai/web-ui';
+import { useTranslation } from 'react-i18next';
 
 const styles = stylex.create({
   header: {
@@ -13,25 +14,30 @@ const styles = stylex.create({
     height: '60px',
     borderBottom: '1px solid #ddd',
   },
-  title: {
-    fontSize: '1.25rem',
-    marginLeft: '2rem',
-    fontWeight: 600,
-    color: '#333',
-  },
   right: {
     marginRight: '2rem',
+    display: 'flex',
+    gap: '1rem',
   },
 });
 
 const Navbar: React.FC = () => {
   const { theme, setTheme } = useSnapshot(state.general);
+  const { i18n } = useTranslation();
+
+  const toggleLanguage = () => {
+    const newLanguage = i18n.language === 'en' ? 'fr' : 'en';
+    i18n.changeLanguage(newLanguage);
+  };
 
   return (
     <header {...stylex.props(styles.header)}>
-      {/* TODO replace with right logo */}
-      <div {...stylex.props(styles.title)}>Anura Web Sample App</div>
+      {/* TODO replace with logo? */}
+      <Heading>Anura Web Sample App</Heading>
       <div {...stylex.props(styles.right)}>
+        <Button variant="link" onClick={toggleLanguage}>
+          {i18n.language === 'en' ? 'Français' : 'English'}
+        </Button>
         {/* TODO replace with toggle */}
         <Button variant="outline" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
           Change theme
