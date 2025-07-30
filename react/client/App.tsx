@@ -5,10 +5,10 @@ import lightTheme from '@nuralogix.ai/web-ui/themes/light';
 import state from './state';
 import AppRouter from './components/AppRouter';
 import Notification from './components/Notification';
-import { LanguageInitializer } from './language/LanguageInitializer';
 import Navbar from './components/Navbar/Navbar';
 import { useSnapshot } from 'valtio';
 import * as stylex from '@stylexjs/stylex';
+import './language/i18n';
 
 const styles = stylex.create({
   wrapper: {
@@ -30,17 +30,15 @@ const App = () => {
   }, []);
 
   return (
-    <LanguageInitializer>
-      <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-        <Container>
-          <div {...stylex.props(styles.wrapper)}>
-            <Navbar />
-            <AppRouter />
-            <Notification />
-          </div>
-        </Container>
-      </ThemeProvider>
-    </LanguageInitializer>
+    <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
+      <Container>
+        <div {...stylex.props(styles.wrapper)}>
+          <Navbar />
+          <AppRouter />
+          <Notification />
+        </div>
+      </Container>
+    </ThemeProvider>
   );
 };
 
