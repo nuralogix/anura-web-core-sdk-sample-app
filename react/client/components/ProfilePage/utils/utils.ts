@@ -58,6 +58,5 @@ export const convertFormStateToSDKDemographics = (formState: FormState): Demogra
     smoking: parseInt(smoking), // Form value is already SDK value as string
     bloodPressureMedication: parseInt(bloodPressureMed), // Form value is already SDK value as string
     diabetes: parseInt(diabetesStatus), // Form value is already SDK value as string
-    unit: 'Metric', // TODO remove when sdk updated
   };
 };

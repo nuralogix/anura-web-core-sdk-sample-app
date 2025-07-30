@@ -32,7 +32,7 @@ const App = () => {
   return (
     <LanguageInitializer>
       <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
-        <Container height="auto">
+        <Container>
           <div {...stylex.props(styles.wrapper)}>
             <Navbar />
             <AppRouter />

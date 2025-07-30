@@ -45,7 +45,7 @@ const initMeasurement = async (
     apiUrl,
     mirrorVideo: true,
     displayMediaStream: true,
-    metrics: true,
+    metrics: false,
     logger: {
       extractionLibWasm: false,
       mediaPipe: false,
@@ -96,13 +96,14 @@ let totalSize = 0;
 
 const measurementState: MeasurementState = proxy({
   assetFolder: '/assets',
-  apiUrl: 'api.deepaffex.ai', // TODO add EnvVars prodivers like in wms1.0
+  apiUrl: 'api.deepaffex.ai',
   faceTrackerState: ASSETS_NOT_DOWNLOADED,
   percentDownloaded: 0,
   warningMessage: '',
   isMeasurementInProgress: false,
   isMeasurementComplete: false,
   isAnalyzingResults: false,
+  shouldDestroy: false,
   results: [],
   init: async (mediaElement: HTMLDivElement) => {
     measurement = await initMeasurement(
@@ -203,6 +204,10 @@ const measurementState: MeasurementState = proxy({
       measurementState.setTrackerState(state);
       if (state === faceTrackerState.LOADED) {
         console.log(measurementState.getVersion());
+        if (measurementState.shouldDestroy) {
+          await measurement?.destroy();
+          measurementState.shouldDestroy = false;
+        }
       }
       if (state === faceTrackerState.READY) {
         await measurementState.startTracking();
@@ -210,7 +215,7 @@ const measurementState: MeasurementState = proxy({
       }
     };
 
-    measurement.on.resultsReceived = (results: Results) => {
+    measurement.on.resultsReceived = async (results: Results) => {
       measurementState.results.push(results);
       const { points, resultsOrder, finalChunkNumber, errors } = results;
       // TODO: handle errors
@@ -239,7 +244,7 @@ const measurementState: MeasurementState = proxy({
         if (key === 'SNR') {
           const snrValue = Number(points['SNR']!.value);
           if (shouldCancelForLowSNR(snrValue, resultsOrder)) {
-            measurementState.stopMeasurement();
+            await measurementState.reset();
             notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
             break;
           }
@@ -347,12 +352,6 @@ const measurementState: MeasurementState = proxy({
     };
   },
 
-  stopMeasurement: async () => {
-    // TODO fix logic
-    await measurement?.destroy();
-    measurementState.isMeasurementInProgress = false;
-  },
-
   setTrackerState: (state: FaceTrackerState) => {
     measurementState.faceTrackerState = state;
   },
@@ -361,6 +360,14 @@ const measurementState: MeasurementState = proxy({
   },
   getVersion: () => {
     return measurement?.getVersion();
+  },
+  reset: async () => {
+    if (!measurement) return false;
+    measurementState.isMeasurementInProgress = false;
+    measurementState.isMeasurementComplete = false;
+    measurementState.isAnalyzingResults = false;
+    measurementState.warningMessage = '';
+    return await measurement.reset();
   },
   prepare: async () => {
     const apiUrl = '/api';
@@ -405,6 +412,20 @@ const measurementState: MeasurementState = proxy({
       await measurement.startMeasurement();
     }
   },
+  destroy: async () => {
+    const { LOADED, READY } = faceTrackerState;
+    // SDK is already initialized so we can destroy it
+    if (
+      measurementState.faceTrackerState === LOADED ||
+      measurementState.faceTrackerState === READY
+    ) {
+      await measurement?.destroy();
+    } else {
+      // SDK has not been fully initialized yet
+      // so we set a flag to destroy it after it is initialized
+      measurementState.shouldDestroy = true;
+    }
+  },
   setDemographics: (demographics: Demographics) => {
     if (measurement) {
       measurement.setDemographics(demographics);
@@ -413,6 +434,9 @@ const measurementState: MeasurementState = proxy({
   setMaskVisibility: (visibility: boolean) => {
     mask.setMaskVisibility(visibility);
   },
+  setMaskLoadingState: (loading: boolean) => {
+    mask.setLoadingState(loading);
+  }
 });
 
 export default measurementState;

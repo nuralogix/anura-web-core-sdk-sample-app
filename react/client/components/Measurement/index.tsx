@@ -90,6 +90,8 @@ const Measurement = () => {
   const { ASSETS_NOT_DOWNLOADED, NOT_LOADED, READY, LOADING, LOADED } = trackingState;
   const { showNotification } = useSnapshot(state.notification);
   const measurementSnap = useSnapshot(state.measurement);
+  const demographicsSnap = useSnapshot(state.demographics);
+  const { age } = demographicsSnap.demographics;
   const {
     init,
     prepare,
@@ -101,6 +103,7 @@ const Measurement = () => {
     isMeasurementComplete,
     isAnalyzingResults,
     warningMessage,
+    destroy,
   } = measurementSnap;
   const { cameraStream, isOpen, deviceId } = useSnapshot(state.camera);
   const mediaElementRef = useRef<HTMLDivElement | null>(null);
@@ -111,6 +114,12 @@ const Measurement = () => {
     if (mediaElementRef.current) {
       init(mediaElementRef.current);
       prepare();
+    }
+    const destroyMeasurement = async () => {
+      await destroy();
+    }
+    return () => {
+      destroyMeasurement();
     }
   }, []);
 
@@ -125,6 +134,13 @@ const Measurement = () => {
       showNotification(NotificationTypes.Error, t('ERROR_TAB_SWITCHED_OR_WINDOW_MINIMIZED'));
     }
   }, [isTabVisible]);
+
+  useEffect(() => {
+    // Navigate to profile if demographics are not set
+    if (age === 0) {
+       navigate('/');
+    }
+  }, [age]);
 
   const start = async () => {
     // You can optionally pass measurement options to the startMeasurement method

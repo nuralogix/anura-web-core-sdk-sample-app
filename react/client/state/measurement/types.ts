@@ -13,9 +13,9 @@ export interface MeasurementState {
   isMeasurementInProgress: boolean;
   isMeasurementComplete: boolean;
   isAnalyzingResults: boolean;
+  shouldDestroy: boolean;
   warningMessage: string;
   results: Results[];
-  stopMeasurement: () => Promise<void>;
   init: (mediaElement: HTMLDivElement) => Promise<void>;
   setTrackerState: (state: FaceTrackerState) => void;
   setApiUrl: (apiUrl: string) => void;
@@ -29,6 +29,8 @@ export interface MeasurementState {
         faceTracker: string;
       }
     | undefined;
+  reset: () => Promise<boolean>;
+  destroy: () => Promise<void>;
   prepare: () => Promise<void>;
   setMediaStream: (mediaStream: MediaStream) => Promise<void>;
   startTracking: () => Promise<void>;
@@ -36,4 +38,5 @@ export interface MeasurementState {
   startMeasurement: (measurementOptions?: MeasurementOptions) => Promise<void>;
   setDemographics: (demographics: Demographics) => void;
   setMaskVisibility: (visibility: boolean) => void;
+  setMaskLoadingState: (loading: boolean) => void;
 }

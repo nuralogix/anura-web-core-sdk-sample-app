@@ -33,7 +33,7 @@ const Navbar: React.FC = () => {
   return (
     <header {...stylex.props(styles.header)}>
       {/* TODO replace with logo? */}
-      <Heading>Anura Web Sample App</Heading>
+      <Heading>Anura Web Core SDK - React sample app</Heading>
       <div {...stylex.props(styles.right)}>
         <Button variant="link" onClick={toggleLanguage}>
           {i18n.language === 'en' ? 'Français' : 'English'}
