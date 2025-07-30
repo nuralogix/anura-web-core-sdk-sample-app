@@ -107,8 +107,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
         smoking: faceAttributeValue.SMOKER_FALSE,
         bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
-        diabetes: faceAttributeValue.DIABETES_NONE,
-        unit: 'Metric'
+        diabetes: faceAttributeValue.DIABETES_NONE
     };
     measurement.setDemographics(demographics);
 
@@ -171,17 +170,25 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       };
     }
 
+    const destroy = async () => {
+        mask.setMaskVisibility(false);
+        await measurement.stopTracking();
+        await measurement.destroy();
+    };
+
     const toggleCamera = async () => {
         if (isCameraOpen) {
             camera.stop();
             disableButton('toggle-measurement', true);
             disableButton('toggle-camera', false);
-            await measurement.stopTracking();
             mask.setMaskVisibility(false);
+            mask.setLoadingState(true);
+            await measurement.reset();
             toggleCameraButton.textContent = 'Open';
         } else {
             const success = await camera.start(1280, 720);
             toggleCameraButton.textContent = 'Close';
+             mask.setMaskVisibility(true);
         }
     }
 
