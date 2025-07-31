@@ -30,7 +30,6 @@ const config = [
         entryFileNames: 'bundle-[hash].mjs',
       },
     ],
-    external: ['cross-fetch'],
     plugins: [
       del({ targets: deleteTargets }),
       // React checks process.env.NODE_ENV for a production or development value and

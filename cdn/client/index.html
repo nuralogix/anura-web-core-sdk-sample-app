@@ -101,7 +101,9 @@
             <thead>
             <tr>
                 <th>Point</th>
+                <th>Unit</th>
                 <th>Value</th>
+                <th>Group</th>
             </tr>
             </thead>
             <tbody>
@@ -204,8 +206,7 @@
                 sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
                 smoking: faceAttributeValue.SMOKER_FALSE,
                 bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
-                diabetes: faceAttributeValue.DIABETES_NONE,
-                unit: 'Metric'
+                diabetes: faceAttributeValue.DIABETES_NONE
             };
             measurement.setDemographics(demographics);
 
@@ -257,27 +258,35 @@
             }
 
             const disableButton = (id, disabled) => {
-            const element = document.getElementById(id);
-            if (element) {
-                if (disabled) {
-                    element.setAttribute('disabled', true);
-                } else {
-                    element.removeAttribute('disabled');
-                }
+                const element = document.getElementById(id);
+                if (element) {
+                    if (disabled) {
+                        element.setAttribute('disabled', true);
+                    } else {
+                        element.removeAttribute('disabled');
+                    }
+                };
             };
-            }
+
+            const destroy = async () => {
+                mask.setMaskVisibility(false);
+                await measurement.stopTracking();
+                await measurement.destroy();
+            };
 
             const toggleCamera = async () => {
                 if (isCameraOpen) {
                     camera.stop();
                     disableButton('toggle-measurement', true);
                     disableButton('toggle-camera', false);
-                    await measurement.stopTracking();
                     mask.setMaskVisibility(false);
+                    mask.setLoadingState(true);
+                    await measurement.reset();
                     toggleCameraButton.textContent = 'Open';
                 } else {
                     const success = await camera.start(1280, 720);
                     toggleCameraButton.textContent = 'Close';
+                    mask.setMaskVisibility(true);
                 }
             }
 
@@ -399,16 +408,44 @@
                     console.log('Final results', results);
                     resultsTable.classList.remove('is-hidden');
                     const tbody = resultsTable.querySelector('tbody');
-                    pointList.forEach(point => {
-                    const row = document.createElement('tr');
-                    const pointCell = document.createElement('td');
-                    pointCell.textContent = point;
-                    const valueCell = document.createElement('td');
-                    valueCell.textContent = points[point].value;
-                    row.appendChild(pointCell);
-                    row.appendChild(valueCell);
-                    tbody.appendChild(row);
-                    console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                    const uniqueGroups = Array.from(
+                        new Set(pointList.map(p => points[p].meta.group))
+                    );
+                    const BAND_COLOR_MAP = {
+                        YELLOW: 'rgb(255, 236, 137)',
+                        LIGHT_GREEN: 'rgb(145, 230, 183)',
+                        GREEN: 'rgb(98, 219, 153)',
+                        LIGHT_RED: 'rgb(255, 137, 137)',
+                        RED: 'rgb(255, 87, 87)',
+                    };
+                    uniqueGroups.forEach(pointGroup => {
+                        pointList.forEach(point => {
+                            const { meta, info, dial } = points[point]
+                            const { sections } = dial;
+                            const { group } = meta;
+                            const { name, unit } = info;
+                            const color = sections.length === 0
+                                ? 'transparent'
+                                : BAND_COLOR_MAP[sections[dial.group - 1].bandColor];
+                            if (group === pointGroup) {
+                                const row = document.createElement('tr');
+                                const nameCell = document.createElement('td');
+                                nameCell.textContent = name;;
+                                const unitCell = document.createElement('td');
+                                unitCell.textContent = unit;
+                                const valueCell = document.createElement('td');
+                                valueCell.textContent = points[point].value;
+                                valueCell.style.backgroundColor = color;
+                                const groupCell = document.createElement('td');
+                                groupCell.textContent = group;
+                                row.appendChild(nameCell);
+                                row.appendChild(unitCell);
+                                row.appendChild(valueCell);
+                                row.appendChild(groupCell);
+                                tbody.appendChild(row);
+                                console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                            }
+                        });
                     });
                     await toggleCamera();
                 }

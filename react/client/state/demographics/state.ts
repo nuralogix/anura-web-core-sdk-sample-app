@@ -4,14 +4,13 @@ import { DemographicsState } from './types';
 
 const demographicsState: DemographicsState = proxy({
   demographics: {
-    age: 40,
-    height: 180,
-    weight: 60,
+    age: 0,
+    height: 0,
+    weight: 0,
     sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
     smoking: faceAttributeValue.SMOKER_FALSE,
     bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
     diabetes: faceAttributeValue.DIABETES_NONE,
-    unit: 'Metric',
   },
   setDemographics: (demographics) => {
     demographicsState.demographics = demographics;

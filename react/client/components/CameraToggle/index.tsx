@@ -15,16 +15,18 @@ const CameraToggle: React.FC = () => {
   const { isOpen, deviceId } = cameraSnap;
   const {
     setMaskVisibility,
-    stopTracking,
+    setMaskLoadingState,
     setDemographics,
+    reset,
     isMeasurementComplete
   } = measurementSnap;
 
   const toggle = async () => {
     if (isOpen) {
       state.camera.stop();
-      await stopTracking();
       setMaskVisibility(false);
+      setMaskLoadingState(true);
+      await reset();
     } else {
       const demographics: Demographics = {
         age: 40,
@@ -33,11 +35,11 @@ const CameraToggle: React.FC = () => {
         sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
         smoking: faceAttributeValue.SMOKER_FALSE,
         bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
-        diabetes: faceAttributeValue.DIABETES_NONE,
-        unit: 'Metric',
+        diabetes: faceAttributeValue.DIABETES_NONE
       };
       setDemographics(demographics);
       const success = await state.camera.start(1280, 720);
+      setMaskVisibility(true);
     }
   };
 

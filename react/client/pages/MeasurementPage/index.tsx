@@ -7,6 +7,7 @@ import { faceTrackerState as trackingState } from '@nuralogix.ai/anura-web-core-
 import { Button } from '@nuralogix.ai/web-ui';
 import * as stylex from '@stylexjs/stylex';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router';
 
 const styles = stylex.create({
   wrapper: {
@@ -31,13 +32,20 @@ const styles = stylex.create({
 
 const MeasurementPage = () => {
   const { LOADED, READY } = trackingState;
+  const navigate = useNavigate();
   const { t } = useTranslation();
   const measurementSnap = useSnapshot(state.measurement);
   const { isMeasurementInProgress, isAnalyzingResults } = measurementSnap;
-  const { faceTrackerState } = measurementSnap;
+  const { faceTrackerState, setMaskVisibility, setMaskLoadingState } = measurementSnap;
+  const { isOpen } = useSnapshot(state.camera);
   const isFaceTrackerLoaded = faceTrackerState === LOADED || faceTrackerState === READY;
 
-  const handleCancel = () => {};
+  const handleCancel = async () => {
+    if (isOpen) state.camera.stop();
+    setMaskVisibility(false);
+    setMaskLoadingState(true);
+    navigate('/');
+  };
 
   return (
     <div {...stylex.props(styles.wrapper)}>
