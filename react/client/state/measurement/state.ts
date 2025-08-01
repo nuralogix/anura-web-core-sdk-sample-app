@@ -379,12 +379,16 @@ const measurementState: MeasurementState = proxy({
     const tokenResponse = await token.json();
 
     if (studyIdResponse.status === '200' && tokenResponse.status === '200' && measurement) {
-      await measurement.prepare(
+      const success = await measurement.prepare(
         tokenResponse.token,
         tokenResponse.refreshToken,
         studyIdResponse.studyId
       );
-      await measurement.downloadAssets();
+      if (success) {
+        await measurement.downloadAssets();
+      } else {
+        console.error('Failed to prepare measurement with the provided token and study ID');
+      }
     } else {
       console.error('Failed to get Study ID and Token pair');
     }
@@ -398,6 +402,7 @@ const measurementState: MeasurementState = proxy({
   },
   startTracking: async () => {
     if (measurement) {
+      await measurement.setConstraintsConfig(true);
       await measurement.startTracking();
     }
   },
@@ -409,7 +414,7 @@ const measurementState: MeasurementState = proxy({
   startMeasurement: async (measurementOptions?: MeasurementOptions) => {
     if (measurement) {
       measurementState.results = [];
-      await measurement.startMeasurement();
+      await measurement.startMeasurement(false);
     }
   },
   destroy: async () => {
