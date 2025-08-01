@@ -111,10 +111,13 @@ const Measurement = () => {
   const isFaceTrackerLoaded = faceTrackerState === LOADED || faceTrackerState === READY;
 
   useEffect(() => {
-    if (mediaElementRef.current) {
-      init(mediaElementRef.current);
-      prepare();
+    const prepareMeasurement = async () => {
+      if (mediaElementRef.current) {
+        await init(mediaElementRef.current);
+        await prepare();
+      }
     }
+    prepareMeasurement();
     const destroyMeasurement = async () => {
       await destroy();
     }

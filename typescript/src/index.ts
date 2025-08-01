@@ -207,7 +207,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             //   partnerId: "partnerId",
             // };
             disableButton('toggle-measurement', true);
-            await measurement.startMeasurement();
+            await measurement.startMeasurement(false);
         });
     }
 
@@ -251,6 +251,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       }
       if (state === faceTrackerState.READY) {
         disableButton('toggle-measurement', false);
+        await measurement.setConstraintsConfig(true);
         await measurement.startTracking();
          mask.setLoadingState(false);
       }
@@ -390,12 +391,12 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     const tokenResponse = await token.json();
 
     if (studyIdResponse.status === '200' && tokenResponse.status === '200') {
-        await measurement.prepare(
+        const success = await measurement.prepare(
             tokenResponse.token,
             tokenResponse.refreshToken,
             studyIdResponse.studyId
         );
-        await measurement.downloadAssets();
+        if (success) await measurement.downloadAssets();
     } else {
         console.error('Failed to get Study ID and Token pair');
     }
