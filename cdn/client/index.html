@@ -483,14 +483,41 @@
             };
 
             measurement.on.facialLandmarksUpdated = (drawables) => {
-                if(drawables.face.detected) {
-                    mask.draw(drawables);
-                    if (drawables.percentCompleted >= 100) {
-                        mask.setLoadingState(true);
+                mask.setText('');
+                if (drawables.percentCompleted === 0) {
+                    const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
+                    const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint } = constraints;
+                    let message = '';
+                    if (distanceConstraint !== 'OK') {
+                        message = distanceConstraint === 'TOO_CLOSE'
+                            ? 'Move Back'
+                            : 'Move Closer';
+                    } else if (directionConstraint !== 'OK') {
+                    if (directionConstraint === 'LEFT') {
+                        message = 'Turn Left';
+                    } else if (directionConstraint === 'RIGHT') {
+                        message = 'Turn Right';
+                    } else if (directionConstraint === 'UP') {
+                        message = 'Look Up';
+                    } else if (directionConstraint === 'DOWN') {
+                        message = 'Look Down';
                     }
+                    } else if (rollConstraint !== 'OK') {
+                        message = rollConstraint === 'TILT_LEFT'
+                            ? 'Tilt your face left'
+                            : 'Tilt your face right';
+                    } else if (!centerConstraint) {
+                    message = 'Center your face';
+                    }
+                    mask.setText(message);
+                    mask.draw(drawables, constraints);
                 } else {
-                    console.log('No face detected');
+                    mask.draw(drawables);
                 }
+                if (drawables.percentCompleted >= 100) {
+                    mask.setLoadingState(true);
+                }
+                if (!drawables.face.detected) mask.setText('Face Not Detected', 'DEFAULT');
             }
 
             measurement.on.mediaElementResize = event => {

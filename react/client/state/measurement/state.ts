@@ -324,6 +324,50 @@ const measurementState: MeasurementState = proxy({
       } else {
         loggerState.addLog(logMessages.FACE_NOT_DETECTED, logCategory.measurement);
       }
+
+      mask.setText('');
+      if (drawables.percentCompleted === 0) {
+          const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
+          const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint } = constraints;
+          let message = '';
+          if (distanceConstraint !== 'OK') {
+              message = distanceConstraint === 'TOO_CLOSE'
+                  ? 'Move Back'
+                  : 'Move Closer';
+          } else if (directionConstraint !== 'OK') {
+          if (directionConstraint === 'LEFT') {
+              message = 'Turn Left';
+          } else if (directionConstraint === 'RIGHT') {
+              message = 'Turn Right';
+          } else if (directionConstraint === 'UP') {
+              message = 'Look Up';
+          } else if (directionConstraint === 'DOWN') {
+              message = 'Look Down';
+          }
+          } else if (rollConstraint !== 'OK') {
+              message = rollConstraint === 'TILT_LEFT'
+                  ? 'Tilt your face left'
+                  : 'Tilt your face right';
+          } else if (!centerConstraint) {
+          message = 'Center your face';
+          }
+          mask.setText(message);
+          mask.draw(drawables, constraints);
+      } else {
+          if (!measurementState.isMeasurementInProgress) {
+            measurementState.isMeasurementInProgress = true;
+          }
+          mask.draw(drawables);
+      }
+      if (drawables.percentCompleted >= 100) {
+          mask.setLoadingState(true);
+          measurementState.isMeasurementInProgress = false;
+          measurementState.isAnalyzingResults = true;
+      }
+      if (!drawables.face.detected) {
+        mask.setText('Face Not Detected', 'DEFAULT');
+        loggerState.addLog(logMessages.FACE_NOT_DETECTED, logCategory.measurement);
+      }
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
