@@ -6,7 +6,7 @@
 
 ## Setup
 
-1. Install Node.js v23.6.0 or higher.
+1. Install Node.js v25.0.0 or higher.
 
 2. If you want to use `yarn`, make sure it is installed globally.
 
@@ -142,15 +142,13 @@ to reference the SDK:
                 countDownLabelColor: '#000000',
                 faceNotCenteredColor: '#fc6a0f',
                 /** must be > 0 and <= 1 */
-                diameter: 0.44,
+                diameter: 0.8,
                 /** must be > 0 and <= 1 */
-                sideHeight: 0.06,
-                /** Relative to the top of the container */
-                maskTopMargin: 10,
-                /** Relative to the bottom of the mask */
-                heartTopMargin: 30,
-                /** Relative to the bottom of the heart */
-                starsTopMargin: 20,
+                topMargin: 0.06,
+                /** must be > 0 and <= 1 */
+                bottomMargin: 0.02,
+                shouldFlipHorizontally: true,
+                swapCoordinates: false,
             };
             const mask = new AnuraMask(anuraMaskSettings);
         }

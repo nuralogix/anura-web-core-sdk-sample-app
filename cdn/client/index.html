@@ -1,568 +1,864 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- For demo purposes only, we use Bulma to style page elements. You can use other libraries if you wish -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.2/css/bulma.min.css">
     <title>Anura Web Core SDK - Camera</title>
     <script type="importmap">
         {
           "imports": {
             "@nuralogix.ai/anura-web-core-sdk": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk",
             "@nuralogix.ai/anura-web-core-sdk/helpers": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/helpers/index.min.mjs",
-            "@nuralogix.ai/anura-web-core-sdk/masks/anura": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/anura/index.mjs"
+            "@nuralogix.ai/anura-web-core-sdk/masks/anura": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/anura/index.mjs",
+            "@nuralogix.ai/anura-web-core-sdk/masks/tele": "https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/masks/tele/index.mjs"
           }
         }
     </script>
     <style>
-        .measurement-container {
-            background-color: white;
-            flex-grow: 1;
-            display: flex; 
-            flex-direction: column;
-            overflow: hidden;
-            container-type: size;
-            box-sizing: border-box;
-        }
+      :root {
+        --primary: #3273dc;
+        --primary-hover: #276cda;
+        --border: #dbdbdb;
+        --radius: 6px;
+        --slide-height: 170px;
+        --transition: 0.3s ease;
+        --font: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --shadow: 0 2px 3px rgba(10,10,10,0.1);
+      }
 
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        font-family: var(--font);
+        background: #fafafa;
+      }
+
+      #app {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .toggle-btn {
+        position: fixed;
+        left: 10px;
+        background: var(--primary);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius);
+        padding: 8px 12px;
+        cursor: pointer;
+        font-size: 18px;
+        z-index: 1000;
+        transition: background 0.2s;
+        box-shadow: var(--shadow);
+      }
+
+      .toggle-btn:hover { background: var(--primary-hover); }
+
+      @media (min-width: 769px) { .toggle-btn { top: 10px; } }
+      @media (max-width: 768px) { .toggle-btn { bottom: 10px; } }
+
+      /* Slide panel */
+      .slide-panel {
+        position: fixed;
+        left: 0;
+        width: 100%;
+        height: var(--slide-height);
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        transition: transform var(--transition);
+        overflow-y: auto;
+        padding: 1rem;
+        z-index: 999;
+        border-radius: 0;
+        margin: 0;
+        display: none;
+      }
+      .slide-panel.ready { display: block; }
+
+      .slide-panel h2 {
+        font-size: 1.25rem;
+        margin-bottom: 0.5rem;
+        color: #363636;
+        font-weight: 600;
+      }
+
+      .slide-panel hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 0.75rem 0 1rem 0;
+      }
+
+      .controls {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .select-wrapper {
+        position: relative;
+        display: inline-block;
+      }
+      .select-wrapper::after {
+        content: "▾";
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        color: #666;
+        font-size: 0.8em;
+      }
+      .select-wrapper select {
+        appearance: none;
+        padding: 8px 30px 8px 10px;
+        font-size: 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background-color: #fff;
+        outline: none;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      .select-wrapper select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 1px var(--primary-hover);
+      }
+
+      .button {
+        display: inline-block;
+        padding: 8px 14px;
+        font-size: 1rem;
+        border-radius: var(--radius);
+        cursor: pointer;
+        border: 1px solid transparent;
+        box-shadow: var(--shadow);
+        font-weight: 500;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
+      }
+      .button.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+      .button.primary:hover { background: var(--primary-hover); }
+      .button.light { background: #fff; border-color: var(--border); color: #363636; }
+      .button.light:hover { background: #f5f5f5; }
+      .button:disabled {
+        background-color: #f5f5f5; /* light grey */
+        color: #b5b5b5;           /* grey text */
+        border-color: #dbdbdb;     /* match border */
+        box-shadow: none;
+        pointer-events: none;
+      }
+      .slide-panel.top { top: 0; transform: translateY(-100%); }
+      .slide-panel.top.open { transform: translateY(0); }
+      .slide-panel.bottom { bottom: 0; transform: translateY(100%); }
+      .slide-panel.bottom.open { transform: translateY(0); }
+      body.slide-open { overflow: hidden; }
+      .table {
+        border-collapse: collapse;
+        border-spacing: 0;
+        background: #fff;
+        border: 1px solid #dbdbdb;
+        border-radius: 6px;
+        box-shadow: 0 2px 3px rgba(10,10,10,0.1);
+        margin: 4rem 1rem;
+        overflow: hidden;
+        font-size: 0.95rem;
+      }
+      .table th,
+      .table td {
+        text-align: left;
+        padding: 0.75rem 1rem;
+      }      
+      .is-hidden { display: none !important; }
+      .logo {
+        display: flex; flex-direction: row-reverse; margin-right: 20px; gap: 10px;        
+      }
+      #loading{
+        position: absolute;
+        width: 100%;
+        top: 50%;
+        text-align: center;
+        font-size: 1.2rem;
+        color: #666;
+      }
+      .measurement-container {
+        background-color: white;
+        flex-grow: 1;
+        display: flex; 
+        flex-direction: column;
+        overflow: hidden;
+        container-type: size;
+        box-sizing: border-box;
+      }
+
+      #measurement {
+        flex-grow: 1;
+        position: relative;
+        overflow: hidden;
+        margin: 0 auto;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      /* LANDSCAPE: enforce 16:9 aspect ratio */
+      @container (min-aspect-ratio: 1 / 1) {
         #measurement {
-            flex-grow: 1;
-            position: relative;
-            overflow: hidden;
-            margin: 0 auto;
-            width: 100%;
-            box-sizing: border-box;
+          /* 100% wide unless that results in a width wider than 16:9 */
+          /* Clamp the width so it doesn't exceed container's height × (16 / 9)*/
+          max-width: calc(100cqh * 16 / 9);
         }
-        /* LANDSCAPE: enforce 16:9 aspect ratio */
-        @container (min-aspect-ratio: 1 / 1) {
-            #measurement {
-            /* 100% wide unless that results in a width wider than 16:9 */
-            /* Clamp the width so it doesn't exceed container's height × (16 / 9)*/
-            max-width: calc(100cqh * 16 / 9);
-            }
-        }
+      }
 
-        /* PORTRAIT: allow full width — no max-width clamp */
-        @container (max-aspect-ratio: 1 / 1) {
-            #measurement {
-            max-width: none;
-            }
+      /* PORTRAIT: allow full width — no max-width clamp */
+      @container (max-aspect-ratio: 1 / 1) {
+        #measurement {
+          max-width: none;
         }
-        #app {
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        #progress-container {
-            width: 80%;
-            max-width: 600px;
-            margin: 40px auto; /* vertical spacing + center horizontally */
-            background: #ddd;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
+      }
 
-        #progress-bar {
-            width: 0%;
-            height: 25px;
-            background: linear-gradient(90deg, #4caf50, #81c784);
-            transition: width 0.3s ease;
-            box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);
-            border-radius: 10px 0 0 10px;
-        }
-    </style>    
-</head>
-<body>
-    <div id="app" class="is-hidden">
-        <div class="section">
-            <div class="is-flex mb-4">
-                <div>
-                    <img src="anura-web-core-sdk.svg" alt="SVG Image" width="112" height="112">
-                </div>
-                <div class="is-align-content-center is-size-3 has-text-weight-medium">
-                    Anura Web Core SDK
-                </div>
-            </div>
-            <hr>
-            <div>
-                <div class="select">
-                    <select title="camera-select" id="camera-list"></select>
-                </div>
-                <button type="button" class="button" id="toggle-camera" disabled>Open</button>
-                <button type="button" class="button" id="toggle-measurement" disabled>Start Measurement</button>
-            </div>
+      #prograss-wrapper {
+        position: absolute;
+        top: 0;
+        width: 100%;
+      }
+      #progress-container {
+        width: 80%;
+        max-width: 600px;
+        margin: 40px auto; /* vertical spacing + center horizontally */
+        background: #ddd;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      }
+
+      #progress-bar {
+        width: 0%;
+        height: 25px;
+        background: linear-gradient(90deg, #4caf50, #81c784);
+        transition: width 0.3s ease;
+        box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);
+        border-radius: 10px 0 0 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <button id="slide-toggle" class="toggle-btn is-hidden">☰</button>
+      <div id="slide-panel" class="slide-panel">
+        <div class="logo">
+          <div>
+            <img src="anura-web-core-sdk.svg" alt="SVG Image" width="56" height="56">
+          </div>
+          <div>
+            <h2>Anura Web Core SDK</h2>
+          </div>
         </div>
-        <div class="measurement-container">
-            <div id="measurement"></div>
+        <hr>
+        <div class="controls">
+          <div class="select-wrapper">
+            <select id="camera-list">
+            </select>
+          </div>
+
+          <div class="select-wrapper">
+            <select id="mask-list">
+              <option value="anura">Anura Mask</option>
+              <option value="tele">Tele Mask</option>
+            </select>
+          </div>
+
+          <button class="button light" id="toggle-camera" disabled>Open</button>
+          <button class="button primary" id="toggle-measurement" disabled>Measure</button>
         </div>
-        <table class="table is-hidden" id="results-table">
-            <thead>
-            <tr>
-                <th>Point</th>
-                <th>Unit</th>
-                <th>Value</th>
-                <th>Group</th>
-            </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
+      </div>
+      <div class="measurement-container">
+        <div id="measurement"></div>
+      </div>
+      <div id="loading" class="is-hidden">Waiting for results...</div>
+      <table class="table is-hidden" id="results-table">
+        <thead>
+          <tr>
+            <th>Point</th>
+            <th>Unit</th>
+            <th>Value</th>
+            <th>Group</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
     </div>
-    <div id="progress-container">
+    <div id="prograss-wrapper">
+      <div id="progress-container">
         <div id="progress-bar"></div>
+      </div>
     </div>
     <script type="module">
-        import {
-            Measurement,
-            faceAttributeValue,
-            faceTrackerState,
-            errorCategories,
-            constraintFeedback,
-            constraintStatus,
-            realtimeResultErrors,
-            realtimeResultNotes,
-        } from "@nuralogix.ai/anura-web-core-sdk";
-        import helpers, { CameraControllerEvents } from "@nuralogix.ai/anura-web-core-sdk/helpers";
-        import { AnuraMask } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
-        const { CameraController } = helpers;
-        const {
-            CAMERA_STATUS,
-            SELECTED_DEVICE_CHANGED,
-            MEDIA_DEVICE_LIST_CHANGED
-        } = CameraControllerEvents;
-        let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
+      import { parseResults } from "./metadata.mjs";
+      import {
+        Measurement,
+        faceAttributeValue,
+        faceTrackerState,
+        errorCategories,
+        constraintFeedback,
+        constraintStatus,
+        realtimeResultErrors,
+        realtimeResultNotes,
+      } from "@nuralogix.ai/anura-web-core-sdk";;
+      import helpers, { CameraControllerEvents } from "@nuralogix.ai/anura-web-core-sdk/helpers";
+      import { AnuraMask, constraintCodes } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
+      import { TeleMask } from '@nuralogix.ai/anura-web-core-sdk/masks/tele';
 
-        const mediaElement = document.getElementById('measurement');
-        const cameraList = document.getElementById('camera-list');
-        const resultsTable = document.getElementById('results-table');        
-        const toggleCameraButton = document.getElementById('toggle-camera');
-        const toggleMeasurementButton = document.getElementById('toggle-measurement');
-        if (mediaElement && mediaElement instanceof HTMLDivElement) {
-            const settings = {
-                mediaElement,
-                assetFolder: 'https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/assets',
-                apiUrl: 'api.deepaffex.ai',
-                mirrorVideo: true,
-                displayMediaStream: true,
-                metrics: false,
-                logger: {
-                    extractionLibWasm: false,
-                    mediaPipe: false,
-                    beforeRESTCall: false,
-                    afterRESTCall: false,
-                    sdk: false,
-                    extractionWorker: false,
-                    faceTrackerWorkers: false,
-                },
-                constraintOverrides: {
-                    minimumFps: 14,
-                    boxWidth_pct: 100,
-                    boxHeight_pct: 100,
-                    checkBackLight: false,
-                    checkCameraMovement: false,
-                    checkCentered: true,
-                    checkDistance: false,
-                    checkEyebrowMovement: false,
-                    checkFaceDirection: false,
-                    checkLighting: false,
-                    checkMinFps: true,
-                    checkMovement: false
-                }
-            };
-            // Optional Anura Mask Settings
-            const anuraMaskSettings = {
-                starFillColor: '#39cb3a',
-                starBorderColor: '#d1d1d1',
-                pulseRateColor: 'red',
-                pulseRateLabelColor: '#ffffff',
-                backgroundColor: '#ffffff',
-                countDownLabelColor: '#000000',
-                faceNotCenteredColor: '#fc6a0f',
-                /** must be > 0 and <= 1 */
-                diameter: 0.44,
-                /** must be > 0 and <= 1 */
-                sideHeight: 0.06,
-                /** Relative to the top of the container */
-                maskTopMargin: 10,
-                /** Relative to the bottom of the mask */
-                heartTopMargin: 30,
-                /** Relative to the bottom of the heart */
-                starsTopMargin: 20,
-            };
-            const mask = new AnuraMask(anuraMaskSettings);
-            const measurement = await Measurement.init(settings);
-            measurement.setSettings({
-                logger: {
-                    webSocket: false,
-                }
-            });
+      const { CameraController } = helpers;
+      const { CAMERA_STATUS, SELECTED_DEVICE_CHANGED, MEDIA_DEVICE_LIST_CHANGED } = CameraControllerEvents;
+      let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
-            const demographics = {
-                age: 40,
-                height: 180,
-                weight: 60,
-                sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
-                smoking: faceAttributeValue.SMOKER_FALSE,
-                bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
-                diabetes: faceAttributeValue.DIABETES_NONE
-            };
-            measurement.setDemographics(demographics);
+      const mediaElement = document.getElementById('measurement');
+      const cameraList = document.getElementById('camera-list');
+      const maskList = document.getElementById('mask-list');
+      const resultsTable = document.getElementById('results-table');
+      const toggleCameraButton = document.getElementById('toggle-camera');
+      const toggleMeasurementButton = document.getElementById('toggle-measurement');
+      const measurementContainer = document.getElementsByClassName('measurement-container')[0];
+      const loading = document.getElementById('loading');
+      const toggle = document.getElementById('slide-toggle');
+      const panel = document.getElementById('slide-panel');
+      let closeTimer = null;
+      const AUTO_CLOSE_MS = 4000;
 
-            const camera = CameraController.init();
-            let deviceId = '';
-            let isCameraOpen = false;
-            const onSelectedDeviceChanged = async (e) => {
-                const { deviceId } = e.detail;
-                console.log('Selected deviceId', deviceId);
-            };
+      function openPanel() {
+        panel.classList.add('open');
+        document.body.classList.add('slide-open');
+        resetAutoClose();
+      }
+      function closePanel() {
+        panel.classList.remove('open');
+        document.body.classList.remove('slide-open');
+        clearTimeout(closeTimer);
+      }
+      function resetAutoClose() {
+        clearTimeout(closeTimer);
+        closeTimer = setTimeout(closePanel, AUTO_CLOSE_MS);
+      }
 
-            const onMediaDeviceListChanged = async (e) => {
-                const { mediaDevices } = e.detail;
-                cameraList.innerHTML = ''; // Clears all options
-                const list = mediaDevices.map(mediaDevice => ({
-                    value: mediaDevice.device.deviceId, text: mediaDevice.device.label
-                }));
-                list.forEach(optionData => {
-                    const optionElement = document.createElement('option');
-                    optionElement.value = optionData.value;
-                    optionElement.textContent = optionData.text;
-                    cameraList.appendChild(optionElement);
-                });
-            };
+      toggle.addEventListener('click', () => {
+        panel.classList.contains('open') ? closePanel() : openPanel();
+      });
 
-            const onCameraStatus = async (e) => {
-                const { isOpen } = e.detail;
-                if (isOpen) {
-                    const { capabilities } = e.detail;
-                    console.log({ capabilities });
-                }
-                isCameraOpen = isOpen;
-                if (isCameraOpen) {
-                    await measurement.setMediaStream(camera.cameraStream);
-                    const success = measurement.setObjectFit(mask.objectFit);
-                    if (success) measurement.loadMask(mask.getSvg());
-                }
-            }
+      ['mousemove','touchstart','scroll'].forEach(e => {
+        panel.addEventListener(e, () => { panel.classList.contains('open') && resetAutoClose(); });
+      });
 
-            camera.addEventListener(SELECTED_DEVICE_CHANGED, onSelectedDeviceChanged);
-            camera.addEventListener(MEDIA_DEVICE_LIST_CHANGED, onMediaDeviceListChanged);
-            camera.addEventListener(CAMERA_STATUS, onCameraStatus);
-            const isPermissionGranted = await camera.requestPermission();
-            if (isPermissionGranted && cameraList) {
-                await camera.list();
-                cameraList.addEventListener('change', (e) => {
-                    camera.setDeviceId(e.target.value);
-                });
-            }
-
-            const disableButton = (id, disabled) => {
-                const element = document.getElementById(id);
-                if (element) {
-                    if (disabled) {
-                        element.setAttribute('disabled', true);
-                    } else {
-                        element.removeAttribute('disabled');
-                    }
-                };
-            };
-
-            const destroy = async () => {
-                mask.setMaskVisibility(false);
-                await measurement.stopTracking();
-                await measurement.destroy();
-            };
-
-            const toggleCamera = async () => {
-                if (isCameraOpen) {
-                    camera.stop();
-                    disableButton('toggle-measurement', true);
-                    disableButton('toggle-camera', false);
-                    mask.setMaskVisibility(false);
-                    mask.setLoadingState(true);
-                    await measurement.reset();
-                    toggleCameraButton.textContent = 'Open';
-                } else {
-                    const success = await camera.start(1280, 720);
-                    toggleCameraButton.textContent = 'Close';
-                    mask.setMaskVisibility(true);
-                }
-            }
-
-            if (toggleCameraButton) {
-                toggleCameraButton.addEventListener('click', async () => {
-                    await toggleCamera();
-                });
-            }
-
-            if (toggleMeasurementButton) {
-                toggleMeasurementButton.addEventListener('click', async () => {
-                    // You can optionally pass user data to the startMeasurement method
-                    // Both userProfileId and partnerId are optional
-                    // const measurementOptions = {
-                    //     userProfileId: 'userProfileId',
-                    //     partnerId: 'partnerId',
-                    // };
-                    disableButton('toggle-measurement', true);
-                    await measurement.startMeasurement(false);
-                });
-            }
-
-            let percentDownloaded = 0;
-            let bytesDownloaded = 0;
-            let totalSize = 0;
-            const filesDownloaded = [];
-            measurement.on.bytesDownloaded = (bytes, uncompressedSize, url, done) => {
-                const file = filesDownloaded.find((file) => file.name === url);
-                if (file) {
-                    const diff = bytes - file.bytes;
-                    file.bytes += diff;
-                    bytesDownloaded += diff;
-                } else {
-                    bytesDownloaded += bytes;
-                    totalSize += uncompressedSize;
-                    filesDownloaded.push({ name: url, bytes });
-                }
-                const TOTAL_SIZE = filesDownloaded.length === 7 ? totalSize : 9_000_000;
-                percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
-                document.getElementById('progress-bar').style.width = `${percentDownloaded}%`;
-                if (percentDownloaded === 100) {
-                    document.getElementById('progress-container').classList.add('is-hidden');
-                    document.getElementById('app').classList.remove('is-hidden');
-                }
-            };
-
-            // measurement.on.beforeRESTCall = (timestamp, actionId) => {
-            //   console.log('beforeRESTCall', timestamp, actionId);
-            // };
-
-            // measurement.on.afterRESTCall = (timestamp, actionId, status, error) => {
-            //   console.log('afterRESTCall', timestamp, actionId, status, error);
-            // };
-
-            measurement.on.faceTrackerStateChanged = async (state) => {
-                trackerState = state;
-                if (state === faceTrackerState.LOADED) {
-                    console.log(measurement.getVersion());
-                    disableButton('toggle-camera', false);
-                }
-                if (state === faceTrackerState.READY) {
-                    disableButton('toggle-measurement', false);
-                    await measurement.setConstraintsConfig(true);
-                    await measurement.startTracking();
-                    mask.setLoadingState(false);
-                }
-                console.log('faceTrackerStateChanged', state);
-            };
-
-            measurement.on.resultsReceived = async (results) => {
-                const { points, errors, resultsOrder, finalChunkNumber } = results;
-                const pointList = Object.keys(points);
-                for (const key of pointList) {
-                    const { notes } = points[key];
-                    notes.forEach(note => {
-                    switch (note) {
-                        case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
-                        break;
-                        case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
-                        break;
-                        case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
-                        break;
-                        case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
-                        break;
-                        case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
-                        break;
-                        case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
-                        break;
-                        default:
-                        console.log(`Note for point ${key}: ${note}`);
-                        break;
-                    }
-                    });
-                }
-                switch (errors.code) {
-                    case 'OK':
-                    break;
-                    case realtimeResultErrors.WORKER_ERROR:
-                    console.log('Worker Error:', errors.errors);
-                    break;
-                    case realtimeResultErrors.ANALYSIS_ERROR:
-                    console.log('Analysis Error:', errors.errors);
-                    break;
-                    case realtimeResultErrors.LIVENESS_ERROR:
-                    console.log('Liveness Error:', errors.errors);
-                    break;
-                    default:
-                    console.log('Error:', errors.code, errors.errors);
-                    break;
-                }
-                // Intermediate results
-                if (resultsOrder < finalChunkNumber) {
-                    mask.setIntermediateResults(points);
-                    pointList.forEach(point => {
-                        console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
-                    });
-                }
-                // Final results
-                if (resultsOrder === finalChunkNumber) {
-                    console.log('Final results', results);
-                    resultsTable.classList.remove('is-hidden');
-                    const tbody = resultsTable.querySelector('tbody');
-                    const uniqueGroups = Array.from(
-                        new Set(pointList.map(p => points[p].meta.group))
-                    );
-                    const BAND_COLOR_MAP = {
-                        YELLOW: 'rgb(255, 236, 137)',
-                        LIGHT_GREEN: 'rgb(145, 230, 183)',
-                        GREEN: 'rgb(98, 219, 153)',
-                        LIGHT_RED: 'rgb(255, 137, 137)',
-                        RED: 'rgb(255, 87, 87)',
-                    };
-                    uniqueGroups.forEach(pointGroup => {
-                        pointList.forEach(point => {
-                            const { meta, info, dial } = points[point]
-                            const { sections } = dial;
-                            const { group } = meta;
-                            const { name, unit } = info;
-                            const color = sections.length === 0
-                                ? 'transparent'
-                                : BAND_COLOR_MAP[sections[dial.group - 1].bandColor];
-                            if (group === pointGroup) {
-                                const row = document.createElement('tr');
-                                const nameCell = document.createElement('td');
-                                nameCell.textContent = name;;
-                                const unitCell = document.createElement('td');
-                                unitCell.textContent = unit;
-                                const valueCell = document.createElement('td');
-                                valueCell.textContent = points[point].value;
-                                valueCell.style.backgroundColor = color;
-                                const groupCell = document.createElement('td');
-                                groupCell.textContent = group;
-                                row.appendChild(nameCell);
-                                row.appendChild(unitCell);
-                                row.appendChild(valueCell);
-                                row.appendChild(groupCell);
-                                tbody.appendChild(row);
-                                console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
-                            }
-                        });
-                    });
-                    await toggleCamera();
-                }
-            };
-
-            measurement.on.constraintsUpdated = (feedback, status) => {
-                // if (feedback === constraintFeedback.FACE_FAR && status === constraintStatus.ERROR) {
-                //     console.log('Too far from camera, move closer to the camera.');
-                // }
-            };
-
-            measurement.on.chunkSent = (chunk) => {
-                // console.log('Chunk Sent', chunk);
-            };
-
-            measurement.on.error = (category, data) => {
-                if (category === errorCategories.COLLECTOR) {
-                    console.log('Collector Error:', data);
-                }
-                if (category === errorCategories.ASSET_DOWNLOAD) {
-                    console.log('Download Error:', data);
-                }
-                if (category === errorCategories.WEB_SOCKET) {
-                    if (data.type === 'DISCONNECTED') {
-                    const { code, reason, wasClean } = data;
-                        if (!wasClean) {
-                            console.error('WebSocket Disconnected unexpectedly:', { code, reason });
-                        }
-                    } else if (data.type === 'ERROR') {
-                        const { event } = data;
-                        console.log('WebSocket Error:', event);
-                    }
-                }
-            };
-
-            measurement.on.facialLandmarksUpdated = (drawables) => {
-                mask.setText('');
-                if (drawables.percentCompleted === 0) {
-                    const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
-                    const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint } = constraints;
-                    let message = '';
-                    if (distanceConstraint !== 'OK') {
-                        message = distanceConstraint === 'TOO_CLOSE'
-                            ? 'Move Back'
-                            : 'Move Closer';
-                    } else if (directionConstraint !== 'OK') {
-                    if (directionConstraint === 'LEFT') {
-                        message = 'Turn Left';
-                    } else if (directionConstraint === 'RIGHT') {
-                        message = 'Turn Right';
-                    } else if (directionConstraint === 'UP') {
-                        message = 'Look Up';
-                    } else if (directionConstraint === 'DOWN') {
-                        message = 'Look Down';
-                    }
-                    } else if (rollConstraint !== 'OK') {
-                        message = rollConstraint === 'TILT_LEFT'
-                            ? 'Tilt your face left'
-                            : 'Tilt your face right';
-                    } else if (!centerConstraint) {
-                    message = 'Center your face';
-                    }
-                    mask.setText(message);
-                    mask.draw(drawables, constraints);
-                } else {
-                    mask.draw(drawables);
-                }
-                if (drawables.percentCompleted >= 100) {
-                    mask.setLoadingState(true);
-                }
-                if (!drawables.face.detected) mask.setText('Face Not Detected', 'DEFAULT');
-            }
-
-            measurement.on.mediaElementResize = event => {
-                // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
-                // |--------|-------------|--------------------|-----------------------------------------------------|
-                // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
-                // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
-                // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
-                // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
-                // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
-                // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
-
-                const { detail } = event;
-                const { isPortrait, aspectRatio } = detail;
-                const partialSettings = {
-                    diameter: 0.8,
-                };
-                // You can optionally pass partialSettings to adjust the mask
-                // settings based on the aspect ratio, orientation or other conditions
-                if (isPortrait && aspectRatio < 0.5) {
-                    partialSettings.diameter = 0.81;
-                }
-                mask.resize(detail, partialSettings);
-                console.log('mediaElementResize', event);
-            }
-            
-            const apiUrl = 'http://localhost:7000/api';
-
-            const studyId = await fetch(`${apiUrl}/studyId`);
-            const studyIdResponse = await studyId.json();
-
-            const token = await fetch(`${apiUrl}/token`);
-            const tokenResponse = await token.json();
-
-            if (studyIdResponse.status === '200' && tokenResponse.status === '200') {
-                const success = await measurement.prepare(
-                    tokenResponse.token,
-                    tokenResponse.refreshToken,
-                    studyIdResponse.studyId
-                );
-                if (success) await measurement.downloadAssets();
-            } else {
-                console.error('Failed to get Study ID and Token pair');
-            }
+      function updateMode() {
+        if (window.innerWidth <= 768) {
+          panel.classList.remove('top'); panel.classList.add('bottom');
+        } else {
+          panel.classList.remove('bottom'); panel.classList.add('top');
         }
+        panel.classList.add('ready');
+        closePanel();
+      }
+
+      updateMode();
+      window.addEventListener('resize', updateMode);
+      if (mediaElement) {
+        const settings = {
+          mediaElement: mediaElement,
+          assetFolder: 'https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/assets',
+          // apiUrl: 'api.deepaffex.ai',
+          mirrorVideo: true,
+          displayMediaStream: true,
+          metrics: false,
+          logger: {
+            extractionLibWasm: false,
+            mediaPipe: false,
+            beforeRESTCall: false,
+            afterRESTCall: false,
+            sdk: false,
+            extractionWorker: false,
+            faceTrackerWorkers: false,
+          },
+          constraintOverrides: {
+            minimumFps: 14,
+            boxWidth_pct: 100,
+            boxHeight_pct: 100,
+            checkBackLight: false,
+            checkCameraMovement: false,
+            checkCentered: true,
+            checkDistance: false,
+            checkEyebrowMovement: false,
+            checkFaceDirection: false,
+            checkLighting: false,
+            checkMinFps: true,
+            checkMovement: false
+          }
+        };
+        const checkIsIOS = () => {
+            return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        }
+
+        /**
+         * On iOS Safari the front-camera sensor is rotated 90° relative to
+         * portrait display.  In portrait mode the mask must swap X/Y coordinates
+         * to compensate.  In landscape (or on non-iOS) no swap is needed.
+         */
+        const shouldSwapCoordinates = () =>
+            checkIsIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
+
+        // Optional Settings
+        const anuraMaskSettings = {
+          starFillColor: '#39cb3a',
+          starBorderColor: '#d1d1d1',
+          pulseRateColor: 'red',
+          pulseRateLabelColor: '#ffffff',
+          backgroundColor: '#ffffff',
+          countDownLabelColor: '#000000',
+          faceNotCenteredColor: '#fc6a0f',
+          /** must be > 0 and <= 1 */
+          diameter: 0.8,
+          /** must be > 0 and <= 1 */
+          topMargin: 0.06,
+          /** must be > 0 and <= 1 */
+          bottomMargin: 0.02,
+          shouldFlipHorizontally: true,
+          swapCoordinates: shouldSwapCoordinates(),
+        };
+        let mask = new AnuraMask(anuraMaskSettings);
+        const measurement = await Measurement.init(settings);
+        measurement.setSettings({
+          logger: {
+            webSocket: false,
+          }
+        });
+
+        const demographics = {
+          age: 40,
+          height: 180,
+          weight: 60,
+          sex: faceAttributeValue.SEX_ASSIGNED_MALE_AT_BIRTH,
+          smoking: faceAttributeValue.SMOKER_FALSE,
+          bloodPressureMedication: faceAttributeValue.BLOOD_PRESSURE_MEDICATION_FALSE,
+          diabetes: faceAttributeValue.DIABETES_NONE
+        };
+        const demographicsSet = measurement.setDemographics(demographics);
+
+        const camera = CameraController.init();
+        let deviceId = '';
+        let isCameraOpen = false;
+        const onSelectedDeviceChanged = async (e) => {
+          const { deviceId } = e.detail;
+          console.log('Selected deviceId', deviceId);
+        };
+
+        const onMediaDeviceListChanged = async (e) => {
+          const { mediaDevices } = e.detail;
+          cameraList.innerHTML = ''; // Clears all options
+          const list = mediaDevices.map(mediaDevice => ({
+            value: mediaDevice.device.deviceId, text: mediaDevice.device.label
+          }));
+          list.forEach(optionData => {
+            const optionElement = document.createElement('option');
+            optionElement.value = optionData.value;
+            optionElement.textContent = optionData.text;
+            cameraList.appendChild(optionElement);
+          });
+          console.log('Media devices changed', mediaDevices);
+        };
+
+        const onCameraStatus = async (e) => {
+          const { isOpen } = e.detail;
+          if ( isOpen ) {
+            const { capabilities } = e.detail;
+            console.log({ capabilities });
+          }
+          isCameraOpen = isOpen;
+          if(isCameraOpen) {
+            await measurement.setMediaStream(camera.cameraStream);
+            const success = measurement.setObjectFit(mask.objectFit);
+            if (success) {
+              measurement.loadMask(mask.getSvg());
+            }            
+          }
+        }
+        camera.addEventListener(SELECTED_DEVICE_CHANGED, onSelectedDeviceChanged);
+        camera.addEventListener(MEDIA_DEVICE_LIST_CHANGED, onMediaDeviceListChanged);
+        camera.addEventListener(CAMERA_STATUS, onCameraStatus);
+        const isPermissionGranted = await camera.requestPermission();
+        if (isPermissionGranted && cameraList) {
+          await camera.list();
+          cameraList.addEventListener('change', (e) => {
+            camera.setDeviceId(e.target.value);
+          });
+        }
+
+        maskList.addEventListener('change', (e) => {
+          mask = e.target.value === 'tele'
+            ? new TeleMask()
+            : new AnuraMask(anuraMaskSettings);
+          const success = measurement.setObjectFit(mask.objectFit);
+          if (success) measurement.loadMask(mask.getSvg());
+        });
+
+        const disableButton = (id, disabled) => {
+          const element = document.getElementById(id);
+          if (element) {
+            if (disabled) {
+              element.setAttribute('disabled', true);
+            } else {
+              element.removeAttribute('disabled');
+            }
+          };
+        }
+
+        const destroy = async () => {
+            mask.setMaskVisibility(false);
+            const success = await measurement.destroy();
+            if(success) {
+              console.log('Measurement instance destroyed successfully');
+            } else {
+              console.error('Failed to destroy Measurement instance');
+            }
+        };
+
+        const toggleCamera = async () => {
+          if (isCameraOpen) {
+            camera.stop();
+            disableButton('toggle-measurement', true);
+            disableButton('toggle-camera', false);
+            mask.setMaskVisibility(false);
+            mask.setLoadingState(true);
+            await measurement.reset();
+            toggleCameraButton.textContent = 'Open';
+          } else {
+            resultsTable.classList.add('is-hidden');
+            measurementContainer.classList.remove('is-hidden');
+            const success = await camera.start(1280, 720);
+            toggleCameraButton.textContent = 'Close';
+            mask.setMaskVisibility(true);
+          }
+        }
+
+        if (toggleCameraButton) {
+          toggleCameraButton.addEventListener('click', async () => {
+            await toggleCamera();
+          });
+        }
+
+        if (toggleMeasurementButton) {
+          toggleMeasurementButton.addEventListener('click', async () => {
+            // You can optionally pass user data to the startMeasurement method
+            // Both userProfileId and partnerId are optional
+            // const measurementOptions = {
+            //     userProfileId: "userProfileId",
+            //     partnerId: "partnerId",
+            // };
+            const measurementId = await measurement.startMeasurement(false);
+            console.log("Measurement started with ID:", measurementId);
+          });
+        }
+
+        let percentDownloaded = 0;
+        let bytesDownloaded = 0;
+        let totalSize = 0;
+        const filesDownloaded = [];
+        measurement.on.bytesDownloaded = (bytes, uncompressedSize, url, done) => {
+          const file = filesDownloaded.find((file) => file.name === url);
+          if (file) {
+            const diff = bytes - file.bytes;
+            file.bytes += diff;
+            bytesDownloaded += diff;
+          } else {
+            bytesDownloaded += bytes;
+            totalSize += uncompressedSize;
+            filesDownloaded.push({ name: url, bytes });
+          }
+          const TOTAL_SIZE = filesDownloaded.length === 8 ? totalSize : 4337298;
+          percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
+          document.getElementById('progress-bar').style.width = `${percentDownloaded}%`;
+          if (percentDownloaded === 100) {
+            document.getElementById('progress-container').classList.add('is-hidden');
+            document.getElementById('slide-toggle').classList.remove('is-hidden');
+          }
+        };
+
+        // measurement.on.beforeRESTCall = (timestamp, actionId) => {
+        //   console.log('beforeRESTCall', timestamp, actionId);
+        // };
+
+        // measurement.on.afterRESTCall = (timestamp, actionId, status, error) => {
+        //   console.log('afterRESTCall', timestamp, actionId, status, error);
+        // };
+
+        measurement.on.faceTrackerStateChanged = async (state) => {
+          trackerState = state;
+          if (state === faceTrackerState.LOADED) {
+            console.log(measurement.getVersion());
+            disableButton('toggle-camera', false);
+          }
+          if (state === faceTrackerState.READY) {
+            disableButton('toggle-measurement', false);
+            await measurement.setConstraintsConfig(true);
+            await measurement.startTracking();
+            mask.setLoadingState(false);
+          }
+          console.log('faceTrackerStateChanged', state);
+        };
+
+        measurement.on.resultsReceived = async (results) => {
+          const { Channels, MeasurementDataID, Multiplier } = results;
+          const parsedResults = parseResults(results);
+          const resultsOrder = parseInt(MeasurementDataID.split(':')[1], 10);
+          const finalChunkNumber = 5;
+          const { points, errors } = parsedResults;
+          const pointList = Object.keys(points);
+          for (const key of pointList) {
+            const { notes } = points[key];
+            notes.forEach(note => {
+              switch (note) {
+                case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+                  break;
+                case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+                  break;
+                case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+                  break;
+                case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+                  break;
+                case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+                  break;
+                case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+                  break;
+                default:
+                  console.log(`Note for point ${key}: ${note}`);
+                  break;
+              }
+            });
+          }
+          switch (errors.code) {
+            case 'OK':
+              break;
+            case realtimeResultErrors.WORKER_ERROR:
+              console.log('Worker Error:', errors.errors);
+              break;
+            case realtimeResultErrors.ANALYSIS_ERROR:
+              console.log('Analysis Error:', errors.errors);
+              break;
+            case realtimeResultErrors.LIVENESS_ERROR:
+              console.log('Liveness Error:', errors.errors);
+              break;
+            default:
+              console.log('Error:', errors.code, errors.errors);
+              break;
+          }
+          // Intermediate results
+          if (resultsOrder < finalChunkNumber) {
+            mask.setIntermediateResults(parsedResults.points);
+            pointList.forEach(point => {
+              console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
+            });
+          }
+          // Final results
+          if (resultsOrder === finalChunkNumber) {
+            console.log('Final results', parsedResults);
+            resultsTable.classList.remove('is-hidden');
+            measurementContainer.classList.add('is-hidden');
+            const tbody = resultsTable.querySelector('tbody');
+            const uniqueGroups = Array.from(
+              new Set(pointList.map(p => points[p].meta.group))
+            );
+            const BAND_COLOR_MAP = {
+              YELLOW: 'rgb(255, 236, 137)',
+              LIGHT_GREEN: 'rgb(145, 230, 183)',
+              GREEN: 'rgb(98, 219, 153)',
+              LIGHT_RED: 'rgb(255, 137, 137)',
+              RED: 'rgb(255, 87, 87)',
+            };
+            uniqueGroups.forEach(pointGroup => {
+              pointList.forEach(point => {
+                const { meta, info, dial } = points[point]
+                const { sections } = dial;
+                const { group, resultsType } = meta;
+                if (resultsType === 'INTERNAL') return;
+                const { name, unit } = info;
+                const color = sections.length === 0
+                  ? 'transparent'
+                  : BAND_COLOR_MAP[sections[dial.group - 1].bandColor];
+                if (group === pointGroup) {
+                  let value = points[point].value;
+                  // Handle CVD_MULTI_YEAR_RISK_PROBS: extract the probability for a specific year
+                  // targetYear: value between 1 and 20 representing the year horizon for CVD risk
+                  const targetYear = 10;
+                  let isCvdRisk = false;
+                  if (point === 'CVD_MULTI_YEAR_RISK_PROBS' && points['CVD_MULTI_YEAR_RISK_YEARS']) {
+                      const years = points['CVD_MULTI_YEAR_RISK_YEARS'].value;
+                      const index = years.indexOf(targetYear);
+                      value = index !== -1 ? (Number(value[index]).toFixed(2) ?? 'N/A') : 'N/A';
+                      isCvdRisk = true;
+                  }
+                  const row = document.createElement('tr');
+                  const nameCell = document.createElement('td');
+                  nameCell.textContent = isCvdRisk ? `${name} (${targetYear}-year risk)` : name;
+                  const unitCell = document.createElement('td');
+                  unitCell.textContent = unit;
+                  const valueCell = document.createElement('td');
+                  valueCell.textContent = value;
+                  valueCell.style.backgroundColor = color;
+                  const groupCell = document.createElement('td');
+                  groupCell.textContent = group;
+                  row.appendChild(nameCell);
+                  row.appendChild(unitCell);
+                  row.appendChild(valueCell);
+                  row.appendChild(groupCell);
+                  tbody.appendChild(row);
+                  console.log(`${point} - value: ${points[point].value}, dial:`, points[point].dial);
+                }
+              });
+            });
+            loading.classList.add('is-hidden');
+            await measurement.disconnect();
+            await toggleCamera();
+          }
+        }
+
+        measurement.on.constraintsUpdated = (feedback, status) => {
+          // if (feedback === constraintFeedback.FACE_FAR && status === constraintStatus.ERROR) {
+          //     console.log('Too far from camera, move closer to the camera.');
+          // }
+        }
+
+        const downloadFile = (data, filename) => {
+          const blob = new Blob([data.buffer], {
+            type: 'application/octet-stream',
+          });
+          const url = window.URL.createObjectURL(blob);
+          const link = window.document.createElement('a');
+          link.href = url;
+          link.download = filename;
+          window.document.body.appendChild(link);
+          link.click();
+          window.document.body.removeChild(link);
+          window.URL.revokeObjectURL(url);
+        }
+
+        const saveToDisk = (chunk) => {
+          const { chunkNumber, numberChunks, payload, metadata, measurementId } = chunk;
+          downloadFile(payload, `${measurementId}-payload-${chunkNumber}.bin`);
+          downloadFile(metadata, `${measurementId}-metadata-${chunkNumber}.bin`);
+        };
+
+        measurement.on.chunkSent = (chunk) => {
+          const { chunkNumber, numberChunks } = chunk;
+          // saveToDisk(chunk);
+          if (chunkNumber === numberChunks - 1) {
+            loading.classList.remove('is-hidden');
+          }
+        };
+
+        measurement.on.error = (category, data) => {
+          if (category === errorCategories.COLLECTOR) {
+            console.log('Collector Error:', data);
+          }
+          if (category === errorCategories.ASSET_DOWNLOAD) {
+            console.log('Download Error:', data);
+          }
+          if (category === errorCategories.WEB_SOCKET) {
+            if (data.type === 'DISCONNECTED') {
+              const { code, reason, wasClean } = data;
+              if (!wasClean) {
+                console.error('WebSocket Disconnected unexpectedly:', { code, reason });
+              }
+            } else if (data.type === 'ERROR') {
+              const { event } = data;
+              console.log('WebSocket Error:', event);
+            }
+          }
+        };
+
+        measurement.on.facialLandmarksUpdated = (drawables) => {
+          if (maskList.value == 'tele') {
+            mask.draw(drawables);
+          } else {
+            mask.setText('');
+            if (drawables.percentCompleted === 0) {
+              const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
+              const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint, movementConstraint } = constraints;
+              let message = '';
+              if (distanceConstraint !== constraintCodes.DISTANCE.OK) {
+                  message = distanceConstraint === constraintCodes.DISTANCE.TOO_CLOSE
+                      ? 'Move Back'
+                      : 'Move Closer';
+              } else if (directionConstraint !== constraintCodes.DIRECTION.OK) {
+                if (directionConstraint === constraintCodes.DIRECTION.TURN_LEFT) {
+                  message = 'Turn Left';
+                } else if (directionConstraint === constraintCodes.DIRECTION.TURN_RIGHT) {
+                  message = 'Turn Right';
+                } else if (directionConstraint === constraintCodes.DIRECTION.TURN_UP) {
+                  message = 'Look Up';
+                } else if (directionConstraint === constraintCodes.DIRECTION.TURN_DOWN) {
+                  message = 'Look Down';
+                }
+              } else if (rollConstraint !== constraintCodes.ROLL.OK) {
+                  message = rollConstraint === constraintCodes.ROLL.TILT_LEFT
+                      ? 'Tilt your face left'
+                      : 'Tilt your face right';
+              } else if (centerConstraint === constraintCodes.CENTER.NOT_CENTERED) {
+                message = 'Center your face';
+              } else if (movementConstraint === constraintCodes.MOVEMENT.TOO_MUCH_MOVEMENT) {
+                message = 'Hold Still';
+              }
+              mask.setText(message);
+              mask.draw(drawables, constraints);
+            } else {
+              mask.draw(drawables);
+            }
+            if (!drawables.face.detected) {
+              mask.setText('Face Not Detected', 'DEFAULT');
+            }
+          }
+          if (drawables.percentCompleted >= 100) {
+            mask.setLoadingState(true);
+          }
+        }
+
+        measurement.on.mediaElementResize = event => {
+          const { detail } = event;
+          const { isPortrait, aspectRatio } = detail;
+          const partialSettings = {
+            diameter: 0.8,
+            swapCoordinates: shouldSwapCoordinates(),
+          };
+          if (isPortrait && aspectRatio < 0.5) {
+              partialSettings.diameter = 0.81;
+          }
+          mask.resize(detail, partialSettings);
+        }
+
+        const apiUrl = 'http://localhost:7000/api';
+
+        const studyId = await fetch(`${apiUrl}/studyId`);
+        const studyIdResponse = await studyId.json();
+
+        const token = await fetch(`${apiUrl}/token`);
+        const tokenResponse = await token.json();
+
+        if (studyIdResponse.status === '200' && tokenResponse.status === '200') {
+            const prepareSuccess = await measurement.prepare(
+                tokenResponse.token,
+                tokenResponse.refreshToken,
+                studyIdResponse.studyId
+            );
+            if (prepareSuccess) {
+            const downloadSuccess = await measurement.downloadAssets();
+            if (!downloadSuccess) {
+              console.error('Failed to download assets and initialize workers');
+            }
+          }
+        } else {
+            console.error('Failed to get Study ID and Token pair');
+        }
+      }
     </script>
   </body>
 </html>
