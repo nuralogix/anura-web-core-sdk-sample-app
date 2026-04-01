@@ -6,7 +6,7 @@
 
 ## Setup
 
-1. Install Node.js v23.6.0 or higher.
+1. Install Node.js v25.0.0 or higher.
 
 2. If you want to use `yarn`, make sure it is installed globally.
 

@@ -1,7 +1,6 @@
 body {
     margin:0;
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
 }
 .measurement-container {
     background-color: white;
@@ -40,6 +39,7 @@ body {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow-y: auto;
 }
 
 .logo-container {
@@ -124,6 +124,43 @@ select:focus {
     transition: width 0.3s ease;
     box-shadow: inset 0 -2px 5px rgba(0,0,0,0.2);
     border-radius: 10px 0 0 10px;
+}
+
+#loading {
+    width: 100%;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #666;
+    padding: 2rem 0;
+}
+
+.results-table {
+    border-collapse: collapse;
+    border-spacing: 0;
+    background: #fff;
+    border: 1px solid #dbdbdb;
+    border-radius: 6px;
+    box-shadow: 0 2px 3px rgba(10,10,10,0.1);
+    margin: 2rem auto;
+    overflow: hidden;
+    font-size: 0.95rem;
+    width: 90%;
+    max-width: 900px;
+}
+
+.results-table th,
+.results-table td {
+    text-align: left;
+    padding: 0.75rem 1rem;
+}
+
+.results-table th {
+    background: #f5f5f5;
+    font-weight: 600;
+}
+
+.results-table tr:nth-child(even) {
+    background: #fafafa;
 }
 
 .is-hidden {

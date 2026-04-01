@@ -5,14 +5,12 @@ import {
   faceAttributeValue,
   faceTrackerState,
   errorCategories,
-  constraintFeedback,
-  constraintStatus,
   realtimeResultErrors,
   realtimeResultNotes,
   type ConstraintFeedback,
   type ConstraintStatus,
   type Drawables,
-  type Results,
+  type DFXResults,
   type IsoDate,
   type MediaElementResizeEvent,
   type MeasurementOptions,
@@ -21,7 +19,6 @@ import {
   type Demographics,
   type ChunkSent,
   type ErrorCategories,
-  type DfxPointId,
   type WebSocketError,  
 } from "@nuralogix.ai/anura-web-core-sdk";
 import helpers, {
@@ -30,7 +27,8 @@ import helpers, {
     type SelectedCameraChanged,
     type MediaDeviceListChanged
 } from "@nuralogix.ai/anura-web-core-sdk/helpers";
-import { AnuraMask, type AnuraMaskSettings } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
+import { AnuraMask, type AnuraMaskSettings, constraintCodes } from "@nuralogix.ai/anura-web-core-sdk/masks/anura";
+import { type DfxPointId, parseResults } from "./helpers";
 
 const { CameraController } = helpers;
 const {
@@ -44,11 +42,14 @@ const mediaElement = document.getElementById('measurement') as HTMLDivElement;
 const cameraList = document.getElementById('camera-list') as HTMLSelectElement;
 const toggleCameraButton = document.getElementById('toggle-camera') as HTMLButtonElement;
 const toggleMeasurementButton = document.getElementById('toggle-measurement') as HTMLButtonElement;
+const resultsTable = document.getElementById('results-table') as HTMLTableElement;
+const measurementContainer = document.querySelector('.measurement-container') as HTMLDivElement;
+const loading = document.getElementById('loading') as HTMLDivElement;
 if (mediaElement && mediaElement instanceof HTMLDivElement) {
     const settings: Settings = {
         mediaElement,
-        assetFolder: 'https://unpkg.com/@nuralogix.ai/anura-web-core-sdk/lib/assets',
-        apiUrl: 'api.deepaffex.ai',
+        assetFolder: '/assets',
+        // apiUrl: 'api.deepaffex.ai',
         mirrorVideo: true,
         displayMediaStream: true,
         metrics: false,
@@ -76,6 +77,20 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             checkMovement: false
         }
     };
+
+    const checkIsIOS = () => {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    }
+
+    /**
+     * On iOS Safari the front-camera sensor is rotated 90° relative to
+     * portrait display.  In portrait mode the mask must swap X/Y coordinates
+     * to compensate.  In landscape (or on non-iOS) no swap is needed.
+     */
+    const shouldSwapCoordinates = () =>
+        checkIsIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
+
     // Optional Anura Mask Settings
     const anuraMaskSettings: AnuraMaskSettings = {
         starFillColor: '#39cb3a',
@@ -91,8 +106,10 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         topMargin: 0.06,
         /** must be > 0 and <= 1 */
         bottomMargin: 0.02,
+        shouldFlipHorizontally: true,
+        swapCoordinates: shouldSwapCoordinates(),
     };
-    const mask = new AnuraMask(anuraMaskSettings);
+        const mask = new AnuraMask(anuraMaskSettings);
     const measurement = await Measurement.init(settings);
     measurement.setSettings({
         logger: {
@@ -186,9 +203,11 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             await measurement.reset();
             toggleCameraButton.textContent = 'Open';
         } else {
+            resultsTable.classList.add('is-hidden');
+            measurementContainer.classList.remove('is-hidden');
             const success = await camera.start(1280, 720);
             toggleCameraButton.textContent = 'Close';
-             mask.setMaskVisibility(true);
+            mask.setMaskVisibility(true);
         }
     }
 
@@ -207,7 +226,8 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             //   partnerId: "partnerId",
             // };
             disableButton('toggle-measurement', true);
-            await measurement.startMeasurement(false);
+            const measurementId = await measurement.startMeasurement(false);
+            console.log("Measurement started with ID:", measurementId);
         });
     }
 
@@ -258,60 +278,135 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
       console.log('faceTrackerStateChanged', state);
     };
 
-    measurement.on.resultsReceived = async (results: Results) => {
-        const { points, errors, resultsOrder, finalChunkNumber } = results;
-            const pointList = Object.keys(points) as DfxPointId[];
-            for (const key of pointList) {
-                const { notes } = points[key]!;
-                notes.forEach(note => {
-                    switch (note) {
-                        case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
-                            break;
-                        case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
-                            break;
-                        case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
-                            break;
-                        case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
-                            break;
-                        case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
-                            break;
-                        case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
-                            break;
-                        default:
-                            console.log(`Note for point ${key}: ${note}`);
-                            break;
-                    }
-                });
-            }
-            switch (errors.code) {
-                case 'OK':
-                    break;
-                case realtimeResultErrors.WORKER_ERROR:
-                    console.log('Worker Error:', errors.errors);
-                    break;
-                case realtimeResultErrors.ANALYSIS_ERROR:
-                    console.log('Analysis Error:', errors.errors);
-                    break;
-                case realtimeResultErrors.LIVENESS_ERROR:
-                    console.log('Liveness Error:', errors.errors);
-                    break;
-                default:
-                    console.log('Error:', errors.code, errors.errors);
-                    break;
-            }
+    measurement.on.resultsReceived = async (results: DFXResults) => {
+        const { Channels, Multiplier, MeasurementDataID } = results;
+        const resultsOrder = parseInt(MeasurementDataID.split(':')[1], 10);
+        const pointList = Object.keys(Channels) as DfxPointId[];
+        const parsedResults = parseResults(results);
+        const { points, errors } = parsedResults;
+
+        const finalChunkNumber = 5;
+        for (const key of pointList) {
+            const { notes } = points[key]!;
+            notes.forEach(note => {
+                switch (note) {
+                    case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+                        break;
+                    case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+                        break;
+                    case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+                        break;
+                    case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+                        break;
+                    case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+                        break;
+                    case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+                        break;
+                    default:
+                        console.log(`Note for point ${key}: ${note}`);
+                        break;
+                }
+            });
+        };
+
+        switch (errors.code) {
+            case 'OK':
+                break;
+            case realtimeResultErrors.WORKER_ERROR:
+                console.log('Worker Error:', errors.errors);
+                break;
+            case realtimeResultErrors.ANALYSIS_ERROR:
+                console.log('Analysis Error:', errors.errors);
+                break;
+            case realtimeResultErrors.LIVENESS_ERROR:
+                console.log('Liveness Error:', errors.errors);
+                break;
+            default:
+                console.log('Error:', errors.code, errors.errors);
+                break;
+        }
         // Intermediate results
         if (resultsOrder < finalChunkNumber) {
-            mask.setIntermediateResults(points);
+            const intermediateResults = {
+                ...Channels['HR_BPM'] && {
+                    'HR_BPM' : {
+                    value: Math.trunc(Channels['HR_BPM'].Data[0] / Multiplier).toString(),
+                    }
+                },
+            };
+            mask.setIntermediateResults(intermediateResults);
             for (const key of pointList) {
                 console.log(`${resultsOrder} [Intermediate result: ${key}] ${points[key]!.value}`);
             }
         }
         // Final results
         if (resultsOrder === finalChunkNumber) {
-            console.log('Final results', results);
-            for (const key of pointList) {
-                console.log(`${key} - value: ${points[key]!.value}, dial:`, points[key]!.dial);
-            }
+            console.log('Final results', parsedResults);
+
+            const BAND_COLOR_MAP: Record<string, string> = {
+                YELLOW: 'rgb(255, 236, 137)',
+                LIGHT_GREEN: 'rgb(145, 230, 183)',
+                GREEN: 'rgb(98, 219, 153)',
+                LIGHT_RED: 'rgb(255, 137, 137)',
+                RED: 'rgb(255, 87, 87)',
+            };
+
+            resultsTable.classList.remove('is-hidden');
+            measurementContainer.classList.add('is-hidden');
+            const tbody = resultsTable.querySelector('tbody')!;
+            tbody.innerHTML = '';
+
+            const uniqueGroups = Array.from(
+                new Set(pointList.map(p => points[p]!.meta.group))
+            );
+
+            uniqueGroups.forEach(pointGroup => {
+                pointList.forEach(key => {
+                    const point = points[key]!;
+                    const { meta, info, dial } = point;
+                    const { sections } = dial;
+                    const { group, resultsType } = meta;
+                    if (resultsType === 'INTERNAL') return;
+                    if (group !== pointGroup) return;
+                    const { name, unit } = info;
+                    const color = sections.length === 0
+                        ? 'transparent'
+                        : BAND_COLOR_MAP[sections[dial.group - 1]?.bandColor] ?? 'transparent';
+
+                    let value: string | number[] = point.value;
+                    let displayName = name;
+
+                    // Handle CVD_MULTI_YEAR_RISK_PROBS: extract the probability for a specific year
+                    const targetYear = 10;
+                    if (key === 'CVD_MULTI_YEAR_RISK_PROBS' && points['CVD_MULTI_YEAR_RISK_YEARS']) {
+                        const years = points['CVD_MULTI_YEAR_RISK_YEARS']!.value as number[];
+                        const index = years.indexOf(targetYear);
+                        value = index !== -1 ? (Number((value as number[])[index]).toFixed(2) ?? 'N/A') : 'N/A';
+                        displayName = `${name} (${targetYear}-year risk)`;
+                    }
+
+                    const row = document.createElement('tr');
+                    const nameCell = document.createElement('td');
+                    nameCell.textContent = displayName;
+                    const unitCell = document.createElement('td');
+                    unitCell.textContent = unit;
+                    const valueCell = document.createElement('td');
+                    valueCell.textContent = String(value);
+                    valueCell.style.backgroundColor = color;
+                    const groupCell = document.createElement('td');
+                    groupCell.textContent = group;
+                    row.appendChild(nameCell);
+                    row.appendChild(unitCell);
+                    row.appendChild(valueCell);
+                    row.appendChild(groupCell);
+                    tbody.appendChild(row);
+
+                    console.log(`${key} - value: ${point.value}, dial:`, point.dial);
+                });
+            });
+
+            loading.classList.add('is-hidden');
+            await measurement.disconnect();
             await toggleCamera();
         }
     };
@@ -323,7 +418,11 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     };
 
     measurement.on.chunkSent = (chunk: ChunkSent) => {
-        // console.log('Chunk Sent', chunk);
+        const { chunkNumber, numberChunks } = chunk;
+        // saveToDisk(chunk);
+        if (chunkNumber === numberChunks - 1) {
+            loading.classList.remove('is-hidden');
+        }
     };
 
     measurement.on.error = (category: ErrorCategories, data: unknown | WebSocketError) => {
@@ -347,66 +446,84 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         }
     };
 
+    const downloadFile = (data: ArrayBuffer, filename: string) => {
+        const blob = new Blob([data], { type: 'application/octet-stream' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    };
+
+    const saveToDisk = (chunk: ChunkSent) => {
+        const { chunkNumber, payload, metadata, measurementId } = chunk;
+        downloadFile(payload.buffer as ArrayBuffer, `${measurementId}-payload-${chunkNumber}.bin`);
+        downloadFile(metadata.buffer as ArrayBuffer, `${measurementId}-metadata-${chunkNumber}.bin`);
+    };
+
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {
-        mask.setText('');
-        if (drawables.percentCompleted === 0) {
+          mask.setText('');
+          const { DISTANCE, DIRECTION, ROLL, CENTER, MOVEMENT } = constraintCodes;
+          if (drawables.percentCompleted === 0) {
             const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
-            const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint } = constraints;
+            const {
+                distanceConstraint,
+                directionConstraint,
+                rollConstraint,
+                centerConstraint,
+                movementConstraint
+            } = constraints;
             let message = '';
-            if (distanceConstraint !== 'OK') {
-                message = distanceConstraint === 'TOO_CLOSE'
+            if (distanceConstraint !== DISTANCE.OK) {
+                message = distanceConstraint === DISTANCE.TOO_CLOSE
                     ? 'Move Back'
                     : 'Move Closer';
-            } else if (directionConstraint !== 'OK') {
-            if (directionConstraint === 'LEFT') {
+            } else if (directionConstraint !== DIRECTION.OK) {
+              if (directionConstraint === DIRECTION.TURN_LEFT) {
                 message = 'Turn Left';
-            } else if (directionConstraint === 'RIGHT') {
+              } else if (directionConstraint === DIRECTION.TURN_RIGHT) {
                 message = 'Turn Right';
-            } else if (directionConstraint === 'UP') {
+              } else if (directionConstraint === DIRECTION.TURN_UP) {
                 message = 'Look Up';
-            } else if (directionConstraint === 'DOWN') {
+              } else if (directionConstraint === DIRECTION.TURN_DOWN) {
                 message = 'Look Down';
-            }
-            } else if (rollConstraint !== 'OK') {
-                message = rollConstraint === 'TILT_LEFT'
+              }
+            } else if (rollConstraint !== ROLL.OK) {
+                message = rollConstraint === ROLL.TILT_LEFT
                     ? 'Tilt your face left'
                     : 'Tilt your face right';
-            } else if (!centerConstraint) {
-            message = 'Center your face';
+            } else if (centerConstraint === CENTER.NOT_CENTERED) {
+              message = 'Center your face';
+            } else if (movementConstraint === MOVEMENT.TOO_MUCH_MOVEMENT) {
+              message = 'Hold Still';
             }
             mask.setText(message);
             mask.draw(drawables, constraints);
-        } else {
+          } else {
             mask.draw(drawables);
-        }
-        if (drawables.percentCompleted >= 100) {
+          }
+          if (drawables.percentCompleted >= 100) {
             mask.setLoadingState(true);
-        }
-        if (!drawables.face.detected) mask.setText('Face Not Detected', 'DEFAULT');
+          }
+          if (!drawables.face.detected) {
+            mask.setText('Face Not Detected', 'DEFAULT');
+          }
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
-        // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
-        // |--------|-------------|--------------------|-----------------------------------------------------|
-        // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
-        // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
-        // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
-        // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
-        // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
-        // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
-
-        const { detail } = event;
-        const { isPortrait, aspectRatio } = detail;
-        const partialSettings: Partial<AnuraMaskSettings> = {
+          const { detail } = event;
+          const { isPortrait, aspectRatio } = detail;
+          const partialSettings = {
             diameter: 0.8,
-        };
-        // You can optionally pass partialSettings to adjust the mask
-        // settings based on the aspect ratio, orientation or other conditions
-        if (isPortrait && aspectRatio < 0.5) {
-            partialSettings.diameter = 0.81;
-        }
-        mask.resize(detail, partialSettings);
-        console.log('mediaElementResize', event);
+            swapCoordinates: shouldSwapCoordinates(),
+          };
+          if (isPortrait && aspectRatio < 0.5) {
+              partialSettings.diameter = 0.81;
+          }
+          mask.resize(detail, partialSettings);
     };
     
     const apiUrl = 'http://localhost:7000/api';

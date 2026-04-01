@@ -3,6 +3,7 @@ import del from 'rollup-plugin-delete';
 import html from '@rollup/plugin-html';
 import postcss from 'rollup-plugin-postcss';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import copy from 'rollup-plugin-copy';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
@@ -39,7 +40,17 @@ const config = [
                 template: ({ bundle, files  }) => {
                     return getHtmlTemplate(Object.keys(bundle)[0], files.css[0].fileName);
                }
-            })
+            }),
+            // Copy Tensorflow and DFX Extraction lib assets to the dist folder
+            copy({
+                targets: [
+                {
+                    src: 'node_modules/@nuralogix.ai/anura-web-core-sdk/lib/assets',
+                    dest: `${distFolder}`,
+                },
+                ],
+            }),
+            
         ]
     }
 ];
@@ -78,6 +89,18 @@ return `
         <div class="measurement-container">
             <div id="measurement"></div>
         </div>
+        <div id="loading" class="is-hidden">Waiting for results...</div>
+        <table class="results-table is-hidden" id="results-table">
+            <thead>
+                <tr>
+                    <th>Point</th>
+                    <th>Unit</th>
+                    <th>Value</th>
+                    <th>Group</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
     <div id="progress-container">
         <div id="progress-bar"></div>

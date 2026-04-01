@@ -613,7 +613,14 @@
           }
           // Intermediate results
           if (resultsOrder < finalChunkNumber) {
-            mask.setIntermediateResults(parsedResults.points);
+            const intermediateResults = {
+                ...Channels['HR_BPM'] && {
+                    'HR_BPM' : {
+                    value: Math.trunc(Channels['HR_BPM'].Data[0] / Multiplier).toString(),
+                    }
+                },
+            };
+            mask.setIntermediateResults(intermediateResults);
             pointList.forEach(point => {
               console.log(`${resultsOrder} [Intermediate result: ${point}] ${points[point].value}`);
             });
