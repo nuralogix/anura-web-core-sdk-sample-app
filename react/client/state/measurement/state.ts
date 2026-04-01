@@ -4,7 +4,7 @@ import {
   type ConstraintFeedback,
   type ConstraintStatus,
   type Drawables,
-  type Results,
+  type DFXResults,
   type IsoDate,
   type MediaElementResizeEvent,
   type MeasurementOptions,
@@ -12,7 +12,6 @@ import {
   type FaceTrackerState,
   type Demographics,
   type ChunkSent,
-  type DfxPointId,
   type WebSocketError,
   ErrorCategories,
   errorCategories,
@@ -21,7 +20,7 @@ import {
   realtimeResultErrors,
   realtimeResultNotes,
 } from '@nuralogix.ai/anura-web-core-sdk';
-import { AnuraMask, type AnuraMaskSettings } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
+import { AnuraMask, constraintCodes, type AnuraMaskSettings } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
 import { proxy } from 'valtio';
 import { MeasurementState } from './types';
 import { errors, restActionIds } from '../../config/constants';
@@ -31,6 +30,7 @@ import i18next from 'i18next';
 import loggerState from '../logger/state';
 import { logCategory, logMessages } from '../logger/types';
 import { shouldCancelForLowSNR } from './utils';
+import { parseResults } from './helpers';
 
 const { ASSETS_NOT_DOWNLOADED } = faceTrackerState;
 
@@ -73,20 +73,37 @@ const initMeasurement = async (
   const instance = await Measurement.init(settings);
   return instance;
 };
+
+const checkIsIOS = () => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
+
+/**
+ * On iOS Safari the front-camera sensor is rotated 90° relative to
+ * portrait display.  In portrait mode the mask must swap X/Y coordinates
+ * to compensate.  In landscape (or on non-iOS) no swap is needed.
+ */
+const shouldSwapCoordinates = () =>
+    checkIsIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
+
+// Optional Anura Mask Settings
 const anuraMaskSettings: AnuraMaskSettings = {
-  starFillColor: '#39cb3a',
-  starBorderColor: '#d1d1d1',
-  pulseRateColor: 'red',
-  pulseRateLabelColor: '#ffffff',
-  backgroundColor: '#ffffff',
-  countDownLabelColor: '#000000',
-  faceNotCenteredColor: '#fc6a0f',
-  /** must be > 0 and <= 1 */
-  diameter: 0.8,
-  /** must be > 0 and <= 1 */
-  topMargin: 0.06,
-  /** must be > 0 and <= 1 */
-  bottomMargin: 0.02,
+    starFillColor: '#39cb3a',
+    starBorderColor: '#d1d1d1',
+    pulseRateColor: 'red',
+    pulseRateLabelColor: '#ffffff',
+    backgroundColor: '#ffffff',
+    countDownLabelColor: '#000000',
+    faceNotCenteredColor: '#fc6a0f',
+    /** must be > 0 and <= 1 */
+    diameter: 0.8,
+    /** must be > 0 and <= 1 */
+    topMargin: 0.06,
+    /** must be > 0 and <= 1 */
+    bottomMargin: 0.02,
+    shouldFlipHorizontally: true,
+    swapCoordinates: shouldSwapCoordinates(),
 };
 const mask = new AnuraMask(anuraMaskSettings);
 let measurement: Measurement | null = null;
@@ -215,34 +232,36 @@ const measurementState: MeasurementState = proxy({
       }
     };
 
-    measurement.on.resultsReceived = async (results: Results) => {
-      measurementState.results.push(results);
-      const { points, resultsOrder, finalChunkNumber, errors } = results;
-      // TODO: handle errors
-      const pointList = Object.keys(points) as DfxPointId[];
+    measurement.on.resultsReceived = async (results: DFXResults) => {
+      // Deep copy results to decouple from SDK's internal state management
+      measurementState.results.push(JSON.parse(JSON.stringify(parseResults(results))));
+      const { Channels, Error, Multiplier, MeasurementDataID } = results;
+      const resultsOrder = parseInt(MeasurementDataID.split(':')[1], 10);
+      const pointList = Object.keys(Channels);
       for (const key of pointList) {
-        const { notes } = points[key]!;
-        notes.forEach(note => {
-          switch (note) {
-            case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
-              break;
-            case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
-              break;
-            case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
-              break;
-            case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
-              break;
-            case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
-              break;
-            case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
-              break;
-            default:
-              // console.log(`Note for point ${key}: ${note}`);
-              break;
-          }
-        });
+        if (Channels[key]!.Notes) {
+          Channels[key]!.Notes.forEach((note) => {
+            switch (note) {
+              case realtimeResultNotes.NOTE_DEGRADED_ACCURACY:
+                break;
+              case realtimeResultNotes.NOTE_FT_LIVENSSS_FAILED:
+                break;
+              case realtimeResultNotes.NOTE_MISSING_MEDICAL_INFO:
+                break;
+              case realtimeResultNotes.NOTE_MODEL_LIVENSSS_FAILED:
+                break;
+              case realtimeResultNotes.NOTE_SNR_BELOW_THRESHOLD:
+                break;
+              case realtimeResultNotes.NOTE_USED_PRED_DEMOG:
+                break;
+              default:
+                // console.log(`Note for point ${key}: ${note}`);
+                break;
+            }
+          });
+        }
         if (key === 'SNR') {
-          const snrValue = Number(points['SNR']!.value);
+          const snrValue = Channels['SNR']!.Data[0] / Multiplier;
           if (shouldCancelForLowSNR(snrValue, resultsOrder)) {
             await measurementState.reset();
             notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
@@ -250,7 +269,7 @@ const measurementState: MeasurementState = proxy({
           }
         }
       }
-      switch (errors.code) {
+      switch (Error.Code) {
         case 'OK':
           break;
         case realtimeResultErrors.WORKER_ERROR:
@@ -266,10 +285,17 @@ const measurementState: MeasurementState = proxy({
           // console.log('Error:', errors.code, errors.errors);
           break;
       }
-
+      const finalChunkNumber = 5;
       // Intermediate results
       if (resultsOrder < finalChunkNumber) {
-        mask.setIntermediateResults(points);
+        const intermediateResults = {
+            ...Channels['HR_BPM'] && {
+                'HR_BPM' : {
+                value: Math.trunc(Channels['HR_BPM'].Data[0] / Multiplier).toString(),
+                }
+            },
+        };
+        mask.setIntermediateResults(intermediateResults);
       }
       // Final results
       if (resultsOrder === finalChunkNumber) {
@@ -283,26 +309,26 @@ const measurementState: MeasurementState = proxy({
       status: ConstraintStatus
     ) => {
       // console.log('Feedback: ', feedback, ' status: ', status);
-      if (status === constraintStatus.GOOD) {
-        measurementState.warningMessage = '';
-      }
-      let notifType = NotificationTypes.Info;
-      if (status === constraintStatus.ERROR) {
-        notifType = NotificationTypes.Error;
-      }
-      if (status === constraintStatus.WARN) {
-        notifType = NotificationTypes.Warning;
-      }
-      if (feedback === constraintFeedback.FACE_NONE) {
-        notificationState.showNotification(notifType, i18next.t('ERR_FACE_NONE'));
-      }
-      // TODO handle any other msgs needed
-      if (feedback === constraintFeedback.FACE_FAR) {
-        measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_DISTANCE');
-      }
-      if (feedback === constraintFeedback.FACE_DIRECTION) {
-        measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_GAZE');
-      }
+      // if (status === constraintStatus.GOOD) {
+      //   measurementState.warningMessage = '';
+      // }
+      // let notifType = NotificationTypes.Info;
+      // if (status === constraintStatus.ERROR) {
+      //   notifType = NotificationTypes.Error;
+      // }
+      // if (status === constraintStatus.WARN) {
+      //   notifType = NotificationTypes.Warning;
+      // }
+      // if (feedback === constraintFeedback.FACE_NONE) {
+      //   notificationState.showNotification(notifType, i18next.t('ERR_FACE_NONE'));
+      // }
+      // // TODO handle any other msgs needed
+      // if (feedback === constraintFeedback.FACE_FAR) {
+      //   measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_DISTANCE');
+      // }
+      // if (feedback === constraintFeedback.FACE_DIRECTION) {
+      //   measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_GAZE');
+      // }
       // console.log("Constraints Updated", feedback, status);
     };
 
@@ -324,32 +350,35 @@ const measurementState: MeasurementState = proxy({
       } else {
         loggerState.addLog(logMessages.FACE_NOT_DETECTED, logCategory.measurement);
       }
+      const { DISTANCE, DIRECTION, ROLL, CENTER, MOVEMENT } = constraintCodes;
 
       mask.setText('');
       if (drawables.percentCompleted === 0) {
           const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
-          const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint } = constraints;
+          const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint, movementConstraint } = constraints;
           let message = '';
-          if (distanceConstraint !== 'OK') {
-              message = distanceConstraint === 'TOO_CLOSE'
+          if (distanceConstraint !== DISTANCE.OK) {
+              message = distanceConstraint === DISTANCE.TOO_CLOSE
                   ? 'Move Back'
                   : 'Move Closer';
-          } else if (directionConstraint !== 'OK') {
-          if (directionConstraint === 'LEFT') {
-              message = 'Turn Left';
-          } else if (directionConstraint === 'RIGHT') {
-              message = 'Turn Right';
-          } else if (directionConstraint === 'UP') {
-              message = 'Look Up';
-          } else if (directionConstraint === 'DOWN') {
-              message = 'Look Down';
-          }
-          } else if (rollConstraint !== 'OK') {
-              message = rollConstraint === 'TILT_LEFT'
+          } else if (directionConstraint !== DISTANCE.OK) {
+            if (directionConstraint === DIRECTION.TURN_LEFT) {
+                message = 'Turn Left';
+            } else if (directionConstraint === DIRECTION.TURN_RIGHT) {
+                message = 'Turn Right';
+            } else if (directionConstraint === DIRECTION.TURN_UP) {
+                message = 'Look Up';
+            } else if (directionConstraint === DIRECTION.TURN_DOWN) {
+                message = 'Look Down';
+            }
+          } else if (rollConstraint !== ROLL.OK) {
+              message = rollConstraint === ROLL.TILT_LEFT
                   ? 'Tilt your face left'
                   : 'Tilt your face right';
-          } else if (!centerConstraint) {
-          message = 'Center your face';
+          } else if (centerConstraint === CENTER.NOT_CENTERED) {
+              message = 'Center your face';
+            } else if (movementConstraint === MOVEMENT.TOO_MUCH_MOVEMENT) {
+              message = 'Hold Still';
           }
           mask.setText(message);
           mask.draw(drawables, constraints);
@@ -371,27 +400,16 @@ const measurementState: MeasurementState = proxy({
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
-      // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
-      // |--------|-------------|--------------------|-----------------------------------------------------|
-      // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
-      // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
-      // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
-      // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
-      // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
-      // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
-
       const { detail } = event;
-      // const { isPortrait, aspectRatio } = detail;
-      // const partialSettings: Partial<AnuraMaskSettings> = {
-      //   diameter: 0.8,
-      // };
-      // You can optionally pass partialSettings to adjust the mask
-      // settings based on the aspect ratio, orientation or other conditions
-      // if (isPortrait && aspectRatio < 0.5) {
-      //     partialSettings.diameter = 0.81;
-      // }
-      // mask.resize(detail, partialSettings);
-      mask.resize(detail);
+      const { isPortrait, aspectRatio } = detail;
+      const partialSettings = {
+        diameter: 0.8,
+        swapCoordinates: shouldSwapCoordinates(),
+      };
+      if (isPortrait && aspectRatio < 0.5) {
+          partialSettings.diameter = 0.81;
+      }
+      mask.resize(detail, partialSettings);
       loggerState.addLog(logMessages.MEDIA_ELEMENT_RESIZED, logCategory.measurement, event);
     };
   },

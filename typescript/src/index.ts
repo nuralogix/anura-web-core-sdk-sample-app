@@ -109,7 +109,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         shouldFlipHorizontally: true,
         swapCoordinates: shouldSwapCoordinates(),
     };
-        const mask = new AnuraMask(anuraMaskSettings);
+    const mask = new AnuraMask(anuraMaskSettings);
     const measurement = await Measurement.init(settings);
     measurement.setSettings({
         logger: {
@@ -514,16 +514,16 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
-          const { detail } = event;
-          const { isPortrait, aspectRatio } = detail;
-          const partialSettings = {
+        const { detail } = event;
+        const { isPortrait, aspectRatio } = detail;
+        const partialSettings = {
             diameter: 0.8,
             swapCoordinates: shouldSwapCoordinates(),
-          };
-          if (isPortrait && aspectRatio < 0.5) {
-              partialSettings.diameter = 0.81;
-          }
-          mask.resize(detail, partialSettings);
+        };
+        if (isPortrait && aspectRatio < 0.5) {
+            partialSettings.diameter = 0.81;
+        }
+        mask.resize(detail, partialSettings);
     };
     
     const apiUrl = 'http://localhost:7000/api';

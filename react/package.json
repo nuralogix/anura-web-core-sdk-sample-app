@@ -58,7 +58,7 @@
     "typescript-eslint": "^8.25.0"
   },
   "dependencies": {
-    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-alpha.25",
+    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-beta.12",
     "@nuralogix.ai/web-ui": "^0.1.0-alpha.10",
     "@stylexjs/stylex": "0.9.3",
     "i18next": "^24.2.3",
@@ -70,10 +70,10 @@
     "valtio": "^2.1.5"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=25"
   },
   "browserslist": [
-    "Safari >= 17",
+    "Safari >= 18",
     "last 3 versions"
   ]
 }

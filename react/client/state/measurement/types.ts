@@ -2,8 +2,8 @@ import type {
   Demographics,
   FaceTrackerState,
   MeasurementOptions,
-  Results,
 } from '@nuralogix.ai/anura-web-core-sdk';
+import type { Results } from './helpers';
 
 export interface MeasurementState {
   assetFolder: string;

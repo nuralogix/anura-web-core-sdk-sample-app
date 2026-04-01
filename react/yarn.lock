@@ -1128,11 +1128,6 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@mediapipe/tasks-vision@^0.10.21":
-  version "0.10.21"
-  resolved "https://registry.yarnpkg.com/@mediapipe/tasks-vision/-/tasks-vision-0.10.21.tgz#b78df074763e0c7fdf8606c60121d65c9199bbf6"
-  integrity sha512-TuhKH+credq4zLksGbYrnvJ1aLIWMc5r0UHwzxzql4BHECJwIAoBR61ZrqwGOW6ZmSBIzU1t4VtKj8hbxFaKeA==
-
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -1154,10 +1149,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nuralogix.ai/anura-web-core-sdk@^0.1.0-alpha.25":
-  version "0.1.0-alpha.25"
-  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-alpha.25.tgz#dc4fe9a05c52fa4f1ebdd661eaa7373d055cf09b"
-  integrity sha512-Ai5kmIvOUZrofVRIU2dvTv9Txe2COE3wZGRDKyQ3R9uSzb3RdXg/Crl8UObOxFGDThIsCaJqZukJYtqpdf65Rg==
+"@nuralogix.ai/anura-web-core-sdk@^0.1.0-beta.12":
+  version "0.1.0-beta.12"
+  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-beta.12.tgz#a378bd0f6f3b805c8573b6adc42b29ff32f3c602"
+  integrity sha512-v2j1c7cGr5QIIKUHglw7pziIl5WUldVdzUJekRcKOV5oQyDGdU88jgta6kqKQxRofc7hoB72xdxCRVxQDUWK3Q==
 
 "@nuralogix.ai/web-ui@^0.1.0-alpha.10":
   version "0.1.0-alpha.10"
