@@ -7,12 +7,13 @@ import { nodeResolve } from '@rollup/plugin-node-resolve';
 import del from 'rollup-plugin-delete';
 import postcss from 'rollup-plugin-postcss';
 import html from '@rollup/plugin-html';
-import getpageTemplate from '../scripts/template.mjs';
+import getpageTemplate from '../config/template.mjs';
 import copy from 'rollup-plugin-copy';
 import injectProcessEnv from 'rollup-plugin-inject-process-env';
 import { writeFileSync } from 'fs';
 import postcssImport from 'postcss-import';
 import stylexPlugin from '@stylexjs/rollup-plugin';
+import json from '@rollup/plugin-json';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 const distFolder = 'dist';
@@ -31,7 +32,8 @@ const config = [
       },
     ],
     plugins: [
-      del({ targets: deleteTargets }),
+      json(),
+      del({ targets: deleteTargets, force: true  }),
       // React checks process.env.NODE_ENV for a production or development value and
       // Rollup isn’t providing any. @rollup/plugin-replace is used to provide this information
       replace({
@@ -72,19 +74,28 @@ const config = [
       html({
         fileName: 'index.html',
         template: ({ bundle, files }) => {
-          return getpageTemplate('WMS', Object.keys(bundle)[0], files.css[0].fileName);
+          return getpageTemplate(
+            'Web SDK Sample App - React',
+            Object.keys(bundle)[0],
+            files.css[0].fileName
+          );
         },
       }),
-      // Copy MediaPipe TasksVision and DFX Extraction lib assets to the lib folder, and language files to language folder
+      // Copy TFJS and DFX Extraction lib assets to the lib folder, and language files to language folder
       copy({
         targets: [
-          { src: 'client/language/*.json', dest: 'dist/language' },
+          { src: 'client/language/*.json', dest: `${distFolder}/language` },
           {
             src: 'node_modules/@nuralogix.ai/anura-web-core-sdk/lib/assets',
             dest: `${distFolder}`,
           },
         ],
       }),
+      {
+        generateBundle() {
+          console.log('"React app" generated.');
+        },
+      },
     ],
   },
 ];

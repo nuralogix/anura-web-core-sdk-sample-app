@@ -2,27 +2,20 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { SupportedLanguage } from '../types';
 import Backend from 'i18next-fetch-backend';
-import { supportedLanguages } from './constants';
 
-const initI18n = () => {
-  const browserLanguage = navigator.language.split('-')[0];
-  const matchedLanguage = (
-    supportedLanguages.includes(browserLanguage)
-      ? browserLanguage
-      : 'en'
-  ) as SupportedLanguage;
-
+const initI18n = (loadPath: string, selectedLanguage: SupportedLanguage) => {
   return i18n
     .use(Backend)
     .use(initReactI18next)
     .init({
-      lng: matchedLanguage,
+      lng: selectedLanguage,
       fallbackLng: 'en',
+      supportedLngs: ['en', 'ja', 'zh', 'es', 'pt', 'pt-BR', 'it', 'fr', 'de'],
       backend: {
-        loadPath: '/language/strings.{{lng}}.json',
+        loadPath,
         requestOptions: {
           credentials: 'same-origin',
-          mode: 'cors', 
+          mode: 'cors',
           headers: {
             'Content-Type': 'application/json',
           },
@@ -34,4 +27,4 @@ const initI18n = () => {
     });
 };
 
-initI18n();
+export default initI18n;

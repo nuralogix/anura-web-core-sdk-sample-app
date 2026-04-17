@@ -1,47 +1,74 @@
 import React from 'react';
 import * as stylex from '@stylexjs/stylex';
-import { useSnapshot } from 'valtio';
-import state from '../../state';
-import { Button, Heading } from '@nuralogix.ai/web-ui';
+import { Heading, Label } from '@nuralogix.ai/web-ui';
 import { useTranslation } from 'react-i18next';
+import MobileMenu from '../MobileMenu';
+import { useMobileDetection } from '../../hooks/useMobileDetection';
+import { LanguageSelector, ThemeToggleControl, LogoutButton } from '../UserControlButtons';
+import { version } from '../../../package.json';
 
 const styles = stylex.create({
   header: {
-    padding: '1rem',
+    padding: '0 1rem',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     height: '60px',
-    borderBottom: '1px solid #ddd',
+    borderBottom: '1px solid var(--border-color, #e0e0e0)',
+    boxSizing: 'border-box',
   },
-  right: {
-    marginRight: '2rem',
+  titleRow: {
     display: 'flex',
-    gap: '1rem',
+    alignItems: 'baseline',
+  },
+  title: {
+    margin: 0,
+    fontSize: 18,
+  },
+  desktopActions: {
+    display: 'none',
+    '@media (min-width: 900px)': {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+    },
+  },
+  mobileMenuWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    '@media (min-width: 900px)': {
+      display: 'none',
+    },
+  },
+  menuInner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 16,
   },
 });
 
 const Navbar: React.FC = () => {
-  const { theme, setTheme } = useSnapshot(state.general);
-  const { i18n } = useTranslation();
+  const { t } = useTranslation();
 
-  const toggleLanguage = () => {
-    const newLanguage = i18n.language === 'en' ? 'fr' : 'en';
-    i18n.changeLanguage(newLanguage);
-  };
+  const { titleKey } = useMobileDetection();
 
   return (
     <header {...stylex.props(styles.header)}>
-      {/* TODO replace with logo? */}
-      <Heading>Anura Web Core SDK - React sample app</Heading>
-      <div {...stylex.props(styles.right)}>
-        <Button variant="link" onClick={toggleLanguage}>
-          {i18n.language === 'en' ? 'Français' : 'English'}
-        </Button>
-        {/* TODO replace with toggle */}
-        <Button variant="outline" onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}>
-          Change theme
-        </Button>
+      <div {...stylex.props(styles.titleRow)}>
+        <div {...stylex.props(styles.title)}>
+          <Heading>{t(titleKey as any)}</Heading>
+        </div>
+        <Label>v{version}</Label>
+      </div>
+      <div {...stylex.props(styles.desktopActions)}>
+        <div {...stylex.props(styles.menuInner)}>
+          <LanguageSelector />
+          <ThemeToggleControl />
+          <LogoutButton />
+        </div>
+      </div>
+      <div {...stylex.props(styles.mobileMenuWrapper)}>
+        <MobileMenu />
       </div>
     </header>
   );

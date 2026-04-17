@@ -3,42 +3,84 @@ import {
   faceTrackerState,
   type ConstraintFeedback,
   type ConstraintStatus,
-  type Drawables,
   type DFXResults,
   type IsoDate,
   type MediaElementResizeEvent,
   type MeasurementOptions,
   type Settings,
   type FaceTrackerState,
-  type Demographics,
   type ChunkSent,
   type WebSocketError,
   ErrorCategories,
   errorCategories,
-  constraintFeedback,
-  constraintStatus,
   realtimeResultErrors,
   realtimeResultNotes,
+  faceAttributeValue,
 } from '@nuralogix.ai/anura-web-core-sdk';
-import { AnuraMask, constraintCodes, type AnuraMaskSettings } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
+import { AnuraMask } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
 import { proxy } from 'valtio';
-import { MeasurementState } from './types';
-import { errors, restActionIds } from '../../config/constants';
-import notificationState from '../notification/state';
-import { NotificationTypes } from '../notification/types';
-import i18next from 'i18next';
+import { MeasurementState, Profile, MeasurementPhase } from './types';
+import { restActionIds } from '../../config/constants';
 import loggerState from '../logger/state';
+import generalState from '../general/state';
 import { logCategory, logMessages } from '../logger/types';
-import { shouldCancelForLowSNR } from './utils';
-import { parseResults } from './helpers';
+import {
+  validateProfile,
+  validateMeasurementOptions,
+  shouldCancelForLowSNR,
+  resetLowSNRCount,
+  getPreMeasurementMessageAndConstraints,
+  createMessageController,
+  buildConstraintOverrides,
+  profileValidationMessages,
+} from './utils';
+import { ErrorCodes} from '../../types';
+import configState from '../config/state';
+import { ANURA_MASK_SETTINGS, MESSAGE_REQUIRED_FRAMES, NO_FACE_FRAME_THRESHOLD } from './constants';
+import { loadSavedProfile, saveProfile } from '../../utils/localStorage';
 
 const { ASSETS_NOT_DOWNLOADED } = faceTrackerState;
+const { SEX_ASSIGNED_MALE_AT_BIRTH, SMOKER_FALSE, BLOOD_PRESSURE_MEDICATION_FALSE, DIABETES_NONE } =
+  faceAttributeValue;
+
+const downloadFile = (data: Uint8Array, filename: string) => {
+  const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+  const url = window.URL.createObjectURL(blob);
+  const link = window.document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  window.document.body.appendChild(link);
+  link.click();
+  window.document.body.removeChild(link);
+  window.URL.revokeObjectURL(url);
+};
+
+// Detect iOS devices for coordinate system fix
+const isIOS = () => {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
+};
+
+// Swap coordinates on iOS unless in landscape orientation
+const shouldSwapCoordinates = () =>
+  isIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
+
+// Get mask settings with iOS coordinate fix
+const getMaskSettings = () => {
+  return {
+    ...ANURA_MASK_SETTINGS,
+    ...(shouldSwapCoordinates() && { swapCoordinates: true }),
+  };
+};
 
 const initMeasurement = async (
   mediaElement: HTMLDivElement,
   assetFolder: string,
-  apiUrl: string
+  apiUrl: string | undefined
 ) => {
+  const { checkConstraints } = configState.config;
   const settings: Settings = {
     mediaElement,
     assetFolder,
@@ -55,77 +97,86 @@ const initMeasurement = async (
       extractionWorker: false,
       faceTrackerWorkers: false,
     },
-    constraintOverrides: {
-      minimumFps: 14,
-      boxWidth_pct: 100,
-      boxHeight_pct: 100,
-      checkBackLight: false,
-      checkCameraMovement: false,
-      checkCentered: true,
-      checkDistance: true,
-      checkEyebrowMovement: false,
-      checkFaceDirection: true,
-      checkLighting: false,
-      checkMinFps: true,
-      checkMovement: true,
-    },
+    constraintOverrides: buildConstraintOverrides(checkConstraints),
   };
   const instance = await Measurement.init(settings);
   return instance;
 };
 
-const checkIsIOS = () => {
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-}
-
-/**
- * On iOS Safari the front-camera sensor is rotated 90° relative to
- * portrait display.  In portrait mode the mask must swap X/Y coordinates
- * to compensate.  In landscape (or on non-iOS) no swap is needed.
- */
-const shouldSwapCoordinates = () =>
-    checkIsIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
-
-// Optional Anura Mask Settings
-const anuraMaskSettings: AnuraMaskSettings = {
-    starFillColor: '#39cb3a',
-    starBorderColor: '#d1d1d1',
-    pulseRateColor: 'red',
-    pulseRateLabelColor: '#ffffff',
-    backgroundColor: '#ffffff',
-    countDownLabelColor: '#000000',
-    faceNotCenteredColor: '#fc6a0f',
-    /** must be > 0 and <= 1 */
-    diameter: 0.8,
-    /** must be > 0 and <= 1 */
-    topMargin: 0.06,
-    /** must be > 0 and <= 1 */
-    bottomMargin: 0.02,
-    shouldFlipHorizontally: true,
-    swapCoordinates: shouldSwapCoordinates(),
+const defaultProfile = loadSavedProfile() || {
+  age: 0,
+  heightCm: 0,
+  weightKg: 0,
+  sex: SEX_ASSIGNED_MALE_AT_BIRTH,
+  smoking: SMOKER_FALSE,
+  bloodPressureMedication: BLOOD_PRESSURE_MEDICATION_FALSE,
+  diabetes: DIABETES_NONE,
+  bypassProfile: true,
 };
-const mask = new AnuraMask(anuraMaskSettings);
+
+let mask = new AnuraMask(getMaskSettings());
 let measurement: Measurement | null = null;
 let bytesDownloaded = 0;
 let filesDownloaded: { name: string; bytes: number }[] = [];
 let totalSize = 0;
+let noFaceFrameCount = 0;
+
+let messageController: ReturnType<typeof createMessageController>;
+
+const RUN_DEFAULTS = {
+  measurementPhase: MeasurementPhase.Idle,
+  measurementId: '',
+  constraintsSatisfiedStable: false,
+  constraintCode: null,
+} satisfies Pick<MeasurementState, 'measurementPhase' | 'measurementId' | 'constraintsSatisfiedStable' | 'constraintCode'>;
+
+const SESSION_DEFAULTS = {
+  ...RUN_DEFAULTS,
+  isInitialized: false,
+  token: '',
+  refreshToken: '',
+  studyId: '',
+  measurementOptions: {},
+  profile: defaultProfile,
+  faceTrackerState: ASSETS_NOT_DOWNLOADED,
+  isFaceTrackerLoaded: false,
+  percentDownloaded: 0,
+  finalChunkNumber: 5,
+} satisfies Pick<MeasurementState, 'measurementPhase' | 'measurementId' | 'constraintsSatisfiedStable' | 'constraintCode' | 'isInitialized' | 'token' | 'refreshToken' | 'studyId' | 'measurementOptions' | 'profile' | 'faceTrackerState' | 'isFaceTrackerLoaded' | 'percentDownloaded' | 'finalChunkNumber'>;
 
 const measurementState: MeasurementState = proxy({
   assetFolder: '/assets',
-  apiUrl: 'api.deepaffex.ai',
-  faceTrackerState: ASSETS_NOT_DOWNLOADED,
-  percentDownloaded: 0,
-  warningMessage: '',
-  isMeasurementInProgress: false,
-  isMeasurementComplete: false,
-  isAnalyzingResults: false,
-  shouldDestroy: false,
+  appPath: '.',
+  apiUrl: undefined,
+  ...SESSION_DEFAULTS,
   results: [],
+  setAppSettings: (
+    token: string,
+    refreshToken: string,
+    studyId: string,
+    measurementOptions: MeasurementOptions = {}
+  ) => {
+    measurementState.token = token;
+    measurementState.refreshToken = refreshToken;
+    measurementState.studyId = studyId;
+    loggerState.addLog(logMessages.TOKENS_AND_STUDY_ID_SET, logCategory.app, { token, refreshToken, studyId });
+    // Validate measurementOptions before storing
+    const validation = validateMeasurementOptions(measurementOptions);
+    if (validation.code !== 'VALID') {
+      loggerState.addLog(logMessages.MEASUREMENT_OPTIONS_INVALID, logCategory.measurement, {
+        validation,
+      });
+      measurementState.measurementOptions = {};
+    } else {
+      loggerState.addLog(logMessages.MEASUREMENT_OPTIONS_SET, logCategory.app, { measurementOptions });
+      measurementState.measurementOptions = measurementOptions;
+    }
+    return validation.code === 'VALID';
+  },
   init: async (mediaElement: HTMLDivElement) => {
     measurement = await initMeasurement(
       mediaElement,
-      measurementState.assetFolder,
+      `${measurementState.appPath}${measurementState.assetFolder}`,
       measurementState.apiUrl
     );
 
@@ -145,7 +196,7 @@ const measurementState: MeasurementState = proxy({
         totalSize += uncompressedSize;
         filesDownloaded.push({ name: url, bytes });
       }
-      const TOTAL_SIZE = filesDownloaded.length === 7 ? totalSize : 9_000_000;
+      const TOTAL_SIZE = filesDownloaded.length === 8 ? totalSize : 4337298;
 
       measurementState.percentDownloaded = Math.min(
         100,
@@ -157,6 +208,9 @@ const measurementState: MeasurementState = proxy({
     measurement.on.error = (category: ErrorCategories, data: unknown | WebSocketError) => {
       if (category === errorCategories.COLLECTOR) {
         loggerState.addLog(logMessages.COLLECTOR_ERROR, logCategory.collector, data);
+        if (measurementState.measurementPhase === MeasurementPhase.InProgress) {
+          generalState.setErrorCode(ErrorCodes.COLLECTOR);
+        }
       }
       if (category === errorCategories.ASSET_DOWNLOAD) {
         // console.log(errors.ERROR_DOWNLOADING_ASSETS, url, error);
@@ -168,6 +222,9 @@ const measurementState: MeasurementState = proxy({
           // The close event is fired when a connection with a WebSocket is closed.
           // A clean disconnection is not an error, but an expected event.
           const { code, reason, wasClean } = payload;
+          // Send WEBSOCKET_DISCONNECTED event for any disconnection
+          loggerState.addLog(logMessages.WEBSOCKET_DISCONNECTED, logCategory.measurement, { code, reason, wasClean });
+          generalState.setErrorCode(ErrorCodes.WEBSOCKET_DISCONNECTED);
           if (!wasClean) {
             // console.error('WebSocket Disconnected unexpectedly:', { code, reason });
           }
@@ -219,24 +276,24 @@ const measurementState: MeasurementState = proxy({
 
     measurement.on.faceTrackerStateChanged = async (state: FaceTrackerState) => {
       measurementState.setTrackerState(state);
+      loggerState.addLog(logMessages.FACE_TRACKER_STATE_CHANGED, logCategory.measurement, { state });
       if (state === faceTrackerState.LOADED) {
-        console.log(measurementState.getVersion());
-        if (measurementState.shouldDestroy) {
-          await measurement?.destroy();
-          measurementState.shouldDestroy = false;
-        }
+        const version = measurementState.getVersion();
+        loggerState.addLog(logMessages.FACE_TRACKER_LOADED, logCategory.measurement, { version });
       }
       if (state === faceTrackerState.READY) {
         await measurementState.startTracking();
-        mask.setLoadingState(false)
+        mask.setLoadingState(false);
       }
     };
 
     measurement.on.resultsReceived = async (results: DFXResults) => {
       // Deep copy results to decouple from SDK's internal state management
-      measurementState.results.push(JSON.parse(JSON.stringify(parseResults(results))));
+      const copiedResults = JSON.parse(JSON.stringify(results));
+      measurementState.results.push(copiedResults);
       const { Channels, Error, Multiplier, MeasurementDataID } = results;
       const resultsOrder = parseInt(MeasurementDataID.split(':')[1], 10);
+      // TODO: handle errors
       const pointList = Object.keys(Channels);
       for (const key of pointList) {
         if (Channels[key]!.Notes) {
@@ -263,8 +320,11 @@ const measurementState: MeasurementState = proxy({
         if (key === 'SNR') {
           const snrValue = Channels['SNR']!.Data[0] / Multiplier;
           if (shouldCancelForLowSNR(snrValue, resultsOrder)) {
-            await measurementState.reset();
-            notificationState.showNotification(NotificationTypes.Error, i18next.t('ERR_MSG_SNR'));
+            loggerState.addLog(logMessages.MEASUREMENT_LOW_SNR, logCategory.measurement, {
+              snr: snrValue,
+              resultsOrder,
+            });
+            generalState.setErrorCode(ErrorCodes.MEASUREMENT_LOW_SNR);
             break;
           }
         }
@@ -273,187 +333,203 @@ const measurementState: MeasurementState = proxy({
         case 'OK':
           break;
         case realtimeResultErrors.WORKER_ERROR:
-          // console.log('Worker Error:', errors.errors);
+          loggerState.addLog(logMessages.WORKER_ERROR, logCategory.measurement, {});
+          generalState.setErrorCode(ErrorCodes.WORKER_ERROR);
           break;
         case realtimeResultErrors.ANALYSIS_ERROR:
-          // console.log('Analysis Error:', errors.errors);
+          loggerState.addLog(logMessages.ANALYSIS_ERROR, logCategory.measurement, {});
+          generalState.setErrorCode(ErrorCodes.ANALYSIS_ERROR);
           break;
         case realtimeResultErrors.LIVENESS_ERROR:
+          loggerState.addLog(logMessages.LIVENESS_ERROR, logCategory.measurement, {});
           // console.log('Liveness Error:', errors.errors);
           break;
         default:
           // console.log('Error:', errors.code, errors.errors);
           break;
       }
-      const finalChunkNumber = 5;
+
       // Intermediate results
-      if (resultsOrder < finalChunkNumber) {
+      if (resultsOrder < measurementState.finalChunkNumber) {
         const intermediateResults = {
-            ...Channels['HR_BPM'] && {
-                'HR_BPM' : {
-                value: Math.trunc(Channels['HR_BPM'].Data[0] / Multiplier).toString(),
-                }
-            },
+          ...Channels['HR_BPM'] && {
+            'HR_BPM' : {
+              value: Math.trunc(Channels['HR_BPM'].Data[0] / Multiplier).toString(),
+            }
+          },
         };
         mask.setIntermediateResults(intermediateResults);
+        loggerState.addLog(logMessages.INTERMEDIATE_RESULTS_RECEIVED, logCategory.measurement, {
+          results: copiedResults,
+        });
       }
       // Final results
-      if (resultsOrder === finalChunkNumber) {
-        measurementState.isAnalyzingResults = false;
-        measurementState.isMeasurementComplete = true;
+      if (resultsOrder === measurementState.finalChunkNumber) {
+        measurementState.measurementPhase = MeasurementPhase.Complete;
+        // Disconnect WebSocket after receiving final results
+        await measurement?.disconnect();
+        loggerState.addLog(logMessages.FINAL_RESULTS_RECEIVED, logCategory.measurement, {
+          results: copiedResults,
+        });
       }
     };
-
     measurement.on.constraintsUpdated = (
       feedback: ConstraintFeedback,
       status: ConstraintStatus
     ) => {
-      // console.log('Feedback: ', feedback, ' status: ', status);
-      // if (status === constraintStatus.GOOD) {
-      //   measurementState.warningMessage = '';
-      // }
-      // let notifType = NotificationTypes.Info;
-      // if (status === constraintStatus.ERROR) {
-      //   notifType = NotificationTypes.Error;
-      // }
-      // if (status === constraintStatus.WARN) {
-      //   notifType = NotificationTypes.Warning;
-      // }
-      // if (feedback === constraintFeedback.FACE_NONE) {
-      //   notificationState.showNotification(notifType, i18next.t('ERR_FACE_NONE'));
-      // }
-      // // TODO handle any other msgs needed
-      // if (feedback === constraintFeedback.FACE_FAR) {
-      //   measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_DISTANCE');
-      // }
-      // if (feedback === constraintFeedback.FACE_DIRECTION) {
-      //   measurementState.warningMessage = i18next.t('WARNING_CONSTRAINT_GAZE');
-      // }
-      // console.log("Constraints Updated", feedback, status);
     };
 
     measurement.on.chunkSent = (chunk: ChunkSent) => {
       loggerState.addLog(logMessages.CHUNK_SENT, logCategory.measurement, chunk);
+      const { chunkNumber, numberChunks } = chunk;
+      const isLastChunk = chunkNumber === numberChunks - 1;
+      if (isLastChunk && measurementState.measurementPhase === MeasurementPhase.InProgress) {
+        measurementState.measurementPhase = MeasurementPhase.Analyzing;
+        mask.setLoadingState(true);
+        mask.setMaskVisibility(false);
+      }
+      if (configState.config.downloadPayloads) {
+        const { measurementId, payload, metadata } = chunk;
+        downloadFile(payload, `${measurementId}-payload-${chunkNumber}.bin`);
+        downloadFile(metadata, `${measurementId}-metadata-${chunkNumber}.bin`);
+      }
     };
 
-    measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {
-      if (drawables.face.detected) {
-        mask.draw(drawables);
-        if (drawables.percentCompleted > 0 && !measurementState.isMeasurementInProgress) {
-          measurementState.isMeasurementInProgress = true;
-        }
-        if (drawables.percentCompleted >= 100) {
-          mask.setLoadingState(true);
-          measurementState.isMeasurementInProgress = false;
-          measurementState.isAnalyzingResults = true;
-        }
-      } else {
-        loggerState.addLog(logMessages.FACE_NOT_DETECTED, logCategory.measurement);
-      }
-      const { DISTANCE, DIRECTION, ROLL, CENTER, MOVEMENT } = constraintCodes;
+    measurement.on.facialLandmarksUpdated = (drawables) => {
+      const isPreMeasurement = drawables.percentCompleted === 0;
+      const isMeasuring = measurementState.measurementPhase === MeasurementPhase.InProgress;
+      const { checkConstraints } = configState.config;
 
-      mask.setText('');
-      if (drawables.percentCompleted === 0) {
-          const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
-          const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint, movementConstraint } = constraints;
-          let message = '';
-          if (distanceConstraint !== DISTANCE.OK) {
-              message = distanceConstraint === DISTANCE.TOO_CLOSE
-                  ? 'Move Back'
-                  : 'Move Closer';
-          } else if (directionConstraint !== DISTANCE.OK) {
-            if (directionConstraint === DIRECTION.TURN_LEFT) {
-                message = 'Turn Left';
-            } else if (directionConstraint === DIRECTION.TURN_RIGHT) {
-                message = 'Turn Right';
-            } else if (directionConstraint === DIRECTION.TURN_UP) {
-                message = 'Look Up';
-            } else if (directionConstraint === DIRECTION.TURN_DOWN) {
-                message = 'Look Down';
-            }
-          } else if (rollConstraint !== ROLL.OK) {
-              message = rollConstraint === ROLL.TILT_LEFT
-                  ? 'Tilt your face left'
-                  : 'Tilt your face right';
-          } else if (centerConstraint === CENTER.NOT_CENTERED) {
-              message = 'Center your face';
-            } else if (movementConstraint === MOVEMENT.TOO_MUCH_MOVEMENT) {
-              message = 'Hold Still';
+      if (isMeasuring) {
+        if (drawables.face.detected) {
+          noFaceFrameCount = 0;
+        } else {
+          noFaceFrameCount++;
+          if (noFaceFrameCount >= NO_FACE_FRAME_THRESHOLD) {
+            generalState.setErrorCode(ErrorCodes.FACE_NONE);
+            noFaceFrameCount = 0;
           }
-          mask.setText(message);
+        }
+      }
+
+      if (isPreMeasurement) {
+        const { message, constraints, code } = getPreMeasurementMessageAndConstraints(
+          drawables,
+          drawables.face.detected,
+          checkConstraints,
+          mask
+        );
+        measurementState.constraintCode = code;
+        messageController.feed(message);
+
+        if (constraints) {
           mask.draw(drawables, constraints);
-      } else {
-          if (!measurementState.isMeasurementInProgress) {
-            measurementState.isMeasurementInProgress = true;
-          }
+        } else {
           mask.draw(drawables);
-      }
-      if (drawables.percentCompleted >= 100) {
-          mask.setLoadingState(true);
-          measurementState.isMeasurementInProgress = false;
-          measurementState.isAnalyzingResults = true;
-      }
-      if (!drawables.face.detected) {
-        mask.setText('Face Not Detected', 'DEFAULT');
-        loggerState.addLog(logMessages.FACE_NOT_DETECTED, logCategory.measurement);
+        }
+      } else {
+        // During measurement, suppress guidance immediately and just draw
+        messageController.clear();
+        mask.draw(drawables);
       }
     };
 
     measurement.on.mediaElementResize = (event: MediaElementResizeEvent) => {
+      // | Case # | Orientation | Aspect Ratio Range | Example Devices & Rotated Modes                     |
+      // |--------|-------------|--------------------|-----------------------------------------------------|
+      // | 1      | Portrait    | `< 0.5`            | Pixel 6, Galaxy S22 Ultra in portrait (20:9 ≈ 0.45) |
+      // | 2      | Portrait    | `0.5 – 0.75`       | iPhone SE (16:9 = ~0.56), older Android phones      |
+      // | 3      | Portrait    | `> 0.75`           | iPad (4:3 = ~0.75), Surface Go in portrait          |
+      // | 4      | Landscape   | `< 1.6`            | iPad in landscape (4:3 = ~1.33), Surface Go         |
+      // | 5      | Landscape   | `1.6 – 2.1`        | 1080p monitors (16:9 ≈ 1.78), MacBook (16:10 ≈ 1.6) |
+      // | 6      | Landscape   | `> 2.1`            | Pixel 6 landscape (≈2.22), 21:9 ultrawide monitors  |
+
       const { detail } = event;
-      const { isPortrait, aspectRatio } = detail;
-      const partialSettings = {
-        diameter: 0.8,
-        swapCoordinates: shouldSwapCoordinates(),
-      };
-      if (isPortrait && aspectRatio < 0.5) {
-          partialSettings.diameter = 0.81;
-      }
-      mask.resize(detail, partialSettings);
-      loggerState.addLog(logMessages.MEDIA_ELEMENT_RESIZED, logCategory.measurement, event);
+      // You can optionally pass partialSettings to adjust the mask
+      // settings based on the aspect ratio, orientation or other conditions
+      mask.resize(detail, { diameter: 0.8, swapCoordinates: shouldSwapCoordinates() });
+      loggerState.addLog(logMessages.MEDIA_ELEMENT_RESIZED, logCategory.measurement, event.detail);
     };
+    measurementState.isInitialized = true;
   },
 
   setTrackerState: (state: FaceTrackerState) => {
     measurementState.faceTrackerState = state;
+    const { LOADED, READY } = faceTrackerState;
+    measurementState.isFaceTrackerLoaded = state === LOADED || state === READY;
   },
-  setApiUrl: (apiUrl: string) => {
+  setApiUrl: (apiUrl: string | undefined) => {
     measurementState.apiUrl = apiUrl;
+    if (apiUrl) {
+      loggerState.addLog(logMessages.API_URL_SET, logCategory.app, {
+        apiUrl,
+      });
+    } else {
+      loggerState.addLog(logMessages.API_URL_NOT_SET, logCategory.app);
+    }
   },
   getVersion: () => {
-    return measurement?.getVersion();
+    return measurement!.getVersion();
+  },
+  disconnect: async () => {
+    // Disconnect if not already disconnected
+    await measurement?.disconnect();
   },
   reset: async () => {
-    if (!measurement) return false;
-    measurementState.isMeasurementInProgress = false;
-    measurementState.isMeasurementComplete = false;
-    measurementState.isAnalyzingResults = false;
-    measurementState.warningMessage = '';
-    return await measurement.reset();
+    if (!measurement) {
+      loggerState.addLog(logMessages.SDK_NOT_INITIALIZED, logCategory.measurement);
+      return false;
+    }
+    await measurementState.disconnect();
+    measurementState.measurementPhase = MeasurementPhase.Resetting;
+    measurementState.constraintsSatisfiedStable = false;
+    // Clear stabilization
+    messageController.clear();
+    noFaceFrameCount = 0;
+    const resetSuccess = await measurement.reset();
+    if (resetSuccess) {
+      loggerState.addLog(logMessages.SDK_RESET_SUCCESS, logCategory.measurement);
+      measurementState.resetRun();
+    } else {
+      loggerState.addLog(logMessages.SDK_RESET_FAILED, logCategory.measurement);
+    }
+    return resetSuccess;
   },
   prepare: async () => {
-    const apiUrl = '/api';
-
-    const studyId = await fetch(`${apiUrl}/studyId`);
-    const studyIdResponse = await studyId.json();
-
-    const token = await fetch(`${apiUrl}/token`);
-    const tokenResponse = await token.json();
-
-    if (studyIdResponse.status === '200' && tokenResponse.status === '200' && measurement) {
-      const success = await measurement.prepare(
-        tokenResponse.token,
-        tokenResponse.refreshToken,
-        studyIdResponse.studyId
-      );
-      if (success) {
-        await measurement.downloadAssets();
+    const success = await measurement?.prepare(
+      measurementState.token,
+      measurementState.refreshToken,
+      measurementState.studyId
+    );
+    if (success) {
+      loggerState.addLog(logMessages.MEASUREMENT_PREPARE_SUCCESS, logCategory.measurement);
+      const assetsDownloaded = await measurement?.downloadAssets();
+      if (assetsDownloaded) {
+        loggerState.addLog(logMessages.ASSETS_DOWNLOADED, logCategory.measurement);
       } else {
-        console.error('Failed to prepare measurement with the provided token and study ID');
+        loggerState.addLog(logMessages.ASSETS_DOWNLOAD_FAILED, logCategory.measurement);
       }
     } else {
-      console.error('Failed to get Study ID and Token pair');
+      loggerState.addLog(logMessages.MEASUREMENT_PREPARE_FAILED, logCategory.measurement, {
+        hasToken: !!measurementState.token,
+        hasRefreshToken: !!measurementState.refreshToken,
+        hasStudyId: !!measurementState.studyId,
+      });
     }
+  },
+  resetSession: () => {
+    Object.assign(measurementState, SESSION_DEFAULTS);
+    bytesDownloaded = 0;
+    filesDownloaded = [];
+    totalSize = 0;
+    noFaceFrameCount = 0;
+    measurement = null;
+    measurementState.reinitMask();
+  },
+  resetRun: () => {
+    Object.assign(measurementState, RUN_DEFAULTS);
+    noFaceFrameCount = 0;
+    measurementState.reinitMask();
   },
   setMediaStream: async (mediaStream: MediaStream) => {
     if (measurement) {
@@ -468,41 +544,97 @@ const measurementState: MeasurementState = proxy({
       await measurement.startTracking();
     }
   },
-  stopTracking: async () => {
+  startMeasurement: async () => {
     if (measurement) {
-      await measurement.stopTracking();
-    }
-  },
-  startMeasurement: async (measurementOptions?: MeasurementOptions) => {
-    if (measurement) {
+      measurementState.measurementPhase = MeasurementPhase.InProgress;
       measurementState.results = [];
-      await measurement.startMeasurement(false);
+      noFaceFrameCount = 0;
+      resetLowSNRCount();
+      const measurementOptions = { ...measurementState.measurementOptions };
+      const { bypassProfile, heightCm, weightKg, ...rest } = measurementState.profile;
+      const demographics = { height: heightCm, weight: weightKg, ...rest };
+
+      // Set profile only if bypassProfile is false
+      if (!bypassProfile) {
+        measurement.setDemographics(demographics);
+        loggerState.addLog(logMessages.MEASUREMENT_DEMOGRAPHICS_SET, logCategory.measurement, {
+          demographics,
+        });
+      }
+      const measurementId = await measurement.startMeasurement(false, measurementOptions);
+      measurementState.measurementId = measurementId;
+      loggerState.addLog(logMessages.MEASUREMENT_STARTED, logCategory.measurement, {
+        measurementId,
+        measurementOptions: measurementOptions,
+      });
     }
   },
   destroy: async () => {
-    const { LOADED, READY } = faceTrackerState;
-    // SDK is already initialized so we can destroy it
-    if (
-      measurementState.faceTrackerState === LOADED ||
-      measurementState.faceTrackerState === READY
-    ) {
-      await measurement?.destroy();
+    if (!measurement) {
+      loggerState.addLog(logMessages.SDK_NOT_INITIALIZED, logCategory.measurement);
+      return false;
+    }
+    const destroySuccess = await measurement.destroy();
+    if (destroySuccess) {
+      loggerState.addLog(logMessages.SDK_DESTROY_SUCCESS, logCategory.measurement);
+      measurementState.resetSession();
     } else {
-      // SDK has not been fully initialized yet
-      // so we set a flag to destroy it after it is initialized
-      measurementState.shouldDestroy = true;
+      loggerState.addLog(logMessages.SDK_DESTROY_FAILED, logCategory.measurement);
     }
+    return destroySuccess;
   },
-  setDemographics: (demographics: Demographics) => {
-    if (measurement) {
-      measurement.setDemographics(demographics);
+  setProfile: (profile: Profile) => {
+    if (!profile || typeof profile !== 'object' || Array.isArray(profile)) {
+      loggerState.addLog(logMessages.PROFILE_INVALID, logCategory.measurement, {
+        message: profileValidationMessages.INVALID_PROFILE_TYPE,
+      });
+      return false;
     }
+
+    if (profile.bypassProfile) {
+      loggerState.addLog(logMessages.PROFILE_INFO_NOT_SET, logCategory.measurement);
+    } else {
+      const validation = validateProfile(profile);
+      if (!validation.valid) {
+        loggerState.addLog(logMessages.PROFILE_INVALID, logCategory.measurement, {
+          message: validation.message,
+        });
+        return false;
+      }
+      measurementState.profile = profile;
+      saveProfile(profile);
+      loggerState.addLog(logMessages.PROFILE_SET, logCategory.measurement, {
+        profile,
+      });
+    }
+    return true;
   },
   setMaskVisibility: (visibility: boolean) => {
     mask.setMaskVisibility(visibility);
   },
   setMaskLoadingState: (loading: boolean) => {
     mask.setLoadingState(loading);
+  },
+  reinitMask: () => {
+    mask = new AnuraMask(getMaskSettings());
+    messageController = createMessageController(mask, MESSAGE_REQUIRED_FRAMES, (stableMsg) => {
+      measurementState.constraintsSatisfiedStable = stableMsg === '';
+      if (measurementState.constraintCode) {
+        loggerState.addLog(logMessages.CONSTRAINT_VIOLATION, logCategory.measurement, { code: measurementState.constraintCode });
+      }
+    });
+    if (measurement) {
+      const success = measurement.setObjectFit(mask.objectFit);
+      if (success) measurement.loadMask(mask.getSvg());
+    }
+    mask.setMaskVisibility(false);
+  },
+});
+
+messageController = createMessageController(mask, MESSAGE_REQUIRED_FRAMES, (stableMsg) => {
+  measurementState.constraintsSatisfiedStable = stableMsg === '';
+  if (measurementState.constraintCode) {
+    loggerState.addLog(logMessages.CONSTRAINT_VIOLATION, logCategory.measurement, { code: measurementState.constraintCode });
   }
 });
 

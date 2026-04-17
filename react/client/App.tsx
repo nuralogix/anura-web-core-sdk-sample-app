@@ -3,12 +3,11 @@ import { Container, ThemeProvider } from '@nuralogix.ai/web-ui';
 import darkTheme from '@nuralogix.ai/web-ui/themes/dark';
 import lightTheme from '@nuralogix.ai/web-ui/themes/light';
 import state from './state';
-import AppRouter from './components/AppRouter';
-import Notification from './components/Notification';
-import Navbar from './components/Navbar/Navbar';
 import { useSnapshot } from 'valtio';
 import * as stylex from '@stylexjs/stylex';
-import './language/i18n';
+import { useInitializeLanguage } from './hooks/useInitializeLanguage';
+import AppRouter from './components/AppRouter';
+import { logCategory, logMessages } from './state/logger/types';
 
 const styles = stylex.create({
   wrapper: {
@@ -22,20 +21,25 @@ const styles = stylex.create({
 
 const App = () => {
   const { theme } = useSnapshot(state.general);
-  /**
-   * Request camera permission on app load
-   */
+
   useEffect(() => {
-    (async () => await state.camera.requestPermission())();
-  }, []);
+    // Handle page unload event
+    const handleBeforeUnload = () => {
+      state.logger.addLog(logMessages.PAGE_UNLOADED, logCategory.app);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);  
+
+  const isLangInitialized = useInitializeLanguage();
+  if (!isLangInitialized) return null;
 
   return (
     <ThemeProvider theme={theme === 'light' ? lightTheme : darkTheme}>
       <Container>
         <div {...stylex.props(styles.wrapper)}>
-          <Navbar />
           <AppRouter />
-          <Notification />
         </div>
       </Container>
     </ThemeProvider>
