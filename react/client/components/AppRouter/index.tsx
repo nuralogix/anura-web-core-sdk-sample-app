@@ -1,18 +1,49 @@
-import { Routes, Route } from 'react-router';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import NotFound from '../../pages/NotFound';
+import Profile from '../../pages/Profile';
 import MeasurementPage from '../../pages/MeasurementPage';
-import ViewResults from '../ViewResults';
-import ProfilePage from '../ProfilePage';
+import Results from '../../pages/Results';
+import PageWrapper from '../PageWrapper';
+import { ProtectedRoute } from '../ProtectedRoute';
+import Login from '../Login';
 
-const AppRouter = () => {
-  return (
+// Single list of protected routes, each already wrapped in its layout component.
+const protectedRoutes = [
+  {
+    path: '/profile',
+    element: (
+      <PageWrapper>
+        <Profile />
+      </PageWrapper>
+    ),
+  },
+  {
+    path: '/results',
+    element: (
+      <PageWrapper>
+        <Results />
+      </PageWrapper>
+    ),
+  },
+  {
+    path: '/measurement',
+    // Measurement now handles its own header (mobile specialized, desktop uses standard Navbar internally)
+    element: <MeasurementPage />,
+  },
+];
+
+const AppRouter = () => (
+  <BrowserRouter basename="/">
     <Routes>
-      <Route path="/" element={<ProfilePage />} />
-      <Route path="/measure" element={<MeasurementPage />} />
-      <Route path="/results" element={<ViewResults />} />
+      <Route path="/" element={<Login />} />
+      <Route element={<ProtectedRoute />}>
+        {protectedRoutes.map(({ path, element }) => (
+          <Route key={path} path={path} element={element} />
+        ))}
+      </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
-  );
-};
+  </BrowserRouter>
+);
 
 export default AppRouter;

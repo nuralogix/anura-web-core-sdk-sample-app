@@ -23,14 +23,21 @@ export type CameraStream = (MediaStream & { $$valtioSnapshot: MediaStream }) | n
 export interface CameraState {
   deviceId: string;
   isPermissionGranted: boolean;
+  enumerationPhase: CameraEnumerationPhase;
   isOpen: boolean;
   capabilities: VideoTrackCapabilities | null;
   mediaDevices: MediaDevice[];
   cameraStream: CameraStream;
   trackinfo: TrackInfo;
-  start(frameWidth: number, frameHeight: number): Promise<void>;
+  start(frameWidth: number, frameHeight: number): Promise<boolean>;
   stop(): void;
   requestPermission(): Promise<void>;
   listCameras(): Promise<void>;
   updateDeviceId(deviceId: string): void;
+}
+
+export enum CameraEnumerationPhase {
+  Idle = 'idle',
+  Enumerating = 'enumerating',
+  Done = 'done',
 }

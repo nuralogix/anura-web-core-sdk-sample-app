@@ -1,6 +1,6 @@
 {
   "name": "nuralogix-anura-web-core-sdk-sample-app-react-server",
-  "version": "2.0.0",
+  "version": "0.1.0-beta.13",
   "description": "Nuralogix Aura Web core SDK Sample App - React - Server",
   "contributors": [
     "Hamed Hassanzadeh Amin",
@@ -15,7 +15,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@nuralogix.ai/dfx-api-client": "^1.0.73",
+    "@nuralogix.ai/dfx-api-client": "^1.0.72",
     "compression": "^1.8.0",
     "connect-livereload": "^0.6.1",
     "cors": "^2.8.5",
@@ -23,7 +23,7 @@
     "livereload": "^0.9.3"
   },
   "engines": {
-    "node": ">=24"
+    "node": ">=25"
   },
   "devDependencies": {
     "@types/compression": "^1.8.1",

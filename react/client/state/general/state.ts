@@ -1,13 +1,20 @@
 import { proxy } from 'valtio';
+import i18n from 'i18next';
 import { GeneralState } from './types';
 
-const savedTheme = localStorage.getItem('theme') === 'dark' ? 'dark' : 'light';
-
 const generalState: GeneralState = proxy({
-  theme: savedTheme,
+  theme: 'light',
+  language: 'en',
+  errorCode: null,
   setTheme: (theme) => {
     generalState.theme = theme;
-    localStorage.setItem('theme', theme);
+  },
+  setLanguage: (language) => {
+    generalState.language = language;
+    i18n.changeLanguage(language);
+  },
+  setErrorCode: (errorCode) => {
+    generalState.errorCode = errorCode;
   },
 });
 

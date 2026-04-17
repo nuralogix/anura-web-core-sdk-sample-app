@@ -1,5 +1,5 @@
 import express,
-{ type NextFunction, type Application, type Request, type Response }
+{ type Application, type Request, type Response }
 from 'express';
 import cors from 'cors' ;
 import compression from 'compression';
@@ -48,12 +48,6 @@ export default class Server {
     }
 
     middlewares() {
-        this.app.use(function(_req: Request, res: Response, next: NextFunction) {
-            // These two headers are needed for shared array buffer to work
-            res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
-            res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-            next();
-        });
         this.app.use(cors({ credentials: true, origin: '*' }));
         if (NODE_ENV==='production') this.app.use(
             compression() as unknown as express.RequestHandler
@@ -83,10 +77,10 @@ export default class Server {
                 DeviceTypeID: DeviceTypeID.WIN32,
                 Name: 'Anura Web Core SDK',
                 Identifier: 'ANURA_WEB_CORE_SDK',
-                Version: '0.1.0-alpha.21',
+                Version: '0.1.0-beta.13',
                 TokenExpiresIn: tokenExpiresIn
             };
-            const registerLicense = await this.apiClient.http.organizations.registerLicense(payload, true);
+            const registerLicense = await this.apiClient.http.organizations.registerLicense(payload, false);
             const { status, body } = registerLicense;
             if (status === '200') {
                 const { Token, RefreshToken } = body;
@@ -104,13 +98,14 @@ export default class Server {
         });
 
         this.app.use('/', express.static(join(__dirname, distFolder)));
+        this.app.use('/', express.static(join(__dirname, '../../lib')));
         this.app.get('/*name', (_req: Request, res: Response) => {
             res.sendFile(join(__dirname, `${distFolder}/index.html`), function (err) {
                 if (err) {
                     res.status(500).send(err);
                 }
             });
-        });        
+        });
     }
 
     listen() {

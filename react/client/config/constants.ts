@@ -4,6 +4,5 @@ export const restActionIds = {
   GET_MEAUREMENT_ID: 504,
 } as const;
 
-export const errors = {
-  ERROR_DOWNLOADING_ASSETS: 'Error downloading Assets',
-} as const;
+export const CAMERA_WIDTH = 1280;
+export const CAMERA_HEIGHT = 720;

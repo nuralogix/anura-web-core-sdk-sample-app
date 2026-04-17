@@ -1,48 +1,26 @@
-import { useEffect } from 'react';
 import { useSnapshot } from 'valtio';
 import state from '../../state';
 import { useTranslation } from 'react-i18next';
-import { Paragraph, Select } from '@nuralogix.ai/web-ui';
+import { Select } from '@nuralogix.ai/web-ui';
 
 const CameraSelector = () => {
   const { t } = useTranslation();
-  const snap = useSnapshot(state.camera);
-  const { isPermissionGranted, mediaDevices, listCameras, updateDeviceId, deviceId } = snap;
+  const { mediaDevices, deviceId } = useSnapshot(state.camera);
 
   /**
    * List available cameras on permission granted
    */
-  useEffect(() => {
-    if (isPermissionGranted) (async () => await listCameras())();
-  }, [isPermissionGranted]);
-
-  /**
-   * Genrate camera list for the dropdown
-   */
-  const options = mediaDevices.map((mediaDevice) => ({
-    label: mediaDevice.device.label,
-    value: mediaDevice.device.deviceId,
-  }));
+  const options = mediaDevices.map((d) => ({ label: d.device.label, value: d.device.deviceId }));
 
   /**
    * Set the selected device id in useCamera hook
    * @param selectedDevice string
    */
-  const onChange = (selectedDevice: string) => {
-    updateDeviceId(selectedDevice);
-  };
-
-  if (!isPermissionGranted) {
-    return <Paragraph>{t('WEB_CAMERA_PERMISSION_REQUIRED_TITLE')}</Paragraph>;
-  }
-
-  if (options.length === 0) {
-    return <Paragraph>{t('NO_DEVICES_FOUND')}</Paragraph>;
-  }
+  const onChange = (selectedDevice: string) => state.camera.updateDeviceId(selectedDevice);
 
   return (
     <Select
-      placeholder={t('WEB_BTN_SELECT_CAMERA')}
+      placeholder={t('SELECT_CAMERA')}
       width="350px"
       value={deviceId}
       options={options}
