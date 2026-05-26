@@ -179,6 +179,14 @@ export const localication = {
     en,
 };
 
+export const BandColor = {
+    YELLOW: 'YELLOW',
+    LIGHT_GREEN: 'LIGHT_GREEN',
+    GREEN: 'GREEN',
+    LIGHT_RED: 'LIGHT_RED',
+    RED: 'RED',
+};
+
 export const pointGroup = {
     METADATA: 'metadata',
     PHYSICAL: 'physical',
@@ -278,8 +286,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['RED', 'LIGHT_RED', 'YELLOW', 'LIGHT_GREEN', 'GREEN']
-      }
+        global: [BandColor.RED, BandColor.LIGHT_RED, BandColor.YELLOW, BandColor.LIGHT_GREEN, BandColor.GREEN]
+      },
+      isInteger: false
     }
   },
   SMK_RISK_PROB: {
@@ -351,8 +360,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   SLEEP_QUALITY: {
@@ -434,8 +444,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['RED', 'LIGHT_RED', 'YELLOW', 'LIGHT_GREEN', 'GREEN']
-      }
+        global: [BandColor.RED, BandColor.LIGHT_RED, BandColor.YELLOW, BandColor.LIGHT_GREEN, BandColor.GREEN]
+      },
+      isInteger: false
     }
   },
   ANXIETY_INDEX: {
@@ -517,8 +528,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   SNR: {
@@ -539,7 +551,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   HR_BPM: {
@@ -617,8 +630,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['YELLOW', 'GREEN', 'YELLOW']
-      }
+        global: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW]
+      },
+      isInteger: true
     }
   },
   BP_SYSTOLIC: {
@@ -700,8 +714,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['YELLOW', 'GREEN', 'LIGHT_GREEN', 'YELLOW', 'RED']
-      }
+        global: [BandColor.YELLOW, BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   BP_DIASTOLIC: {
@@ -783,8 +798,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['YELLOW', 'GREEN', 'LIGHT_GREEN', 'YELLOW', 'RED']
-      }
+        global: [BandColor.YELLOW, BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   BR_BPM: {
@@ -862,8 +878,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['YELLOW', 'GREEN', 'YELLOW']
-      }
+        global: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW]
+      },
+      isInteger: true
     }
   },
   HRV_SDNN: {
@@ -945,8 +962,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['RED', 'LIGHT_RED', 'YELLOW', 'LIGHT_GREEN', 'GREEN']
-      }
+        global: [BandColor.RED, BandColor.LIGHT_RED, BandColor.YELLOW, BandColor.LIGHT_GREEN, BandColor.GREEN]
+      },
+      isInteger: true
     }
   },
   ABSI: {
@@ -1217,11 +1235,12 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        globalMale: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        globalFemale: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        eastAsiaMale: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        eastAsiaFemale: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        globalMale: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        globalFemale: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        eastAsiaMale: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        eastAsiaFemale: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   BMI_CALC: {
@@ -1405,10 +1424,11 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: [ 'YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED' ],
-        eastAsiaMale: [ 'YELLOW', 'GREEN', 'YELLOW', 'RED' ],
-        eastAsiaFemale: [ 'YELLOW', 'GREEN', 'YELLOW', 'RED' ]
-      }
+        global: [ BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED ],
+        eastAsiaMale: [ BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.RED ],
+        eastAsiaFemale: [ BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.RED ]
+      },
+      isInteger: true
     }
   },
   BP_RPP: {
@@ -1490,8 +1510,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   BP_CVD: {
@@ -1573,8 +1594,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   CVD_MULTI_YEAR_RISK_YEARS: {
@@ -1595,7 +1617,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   CVD_MULTI_YEAR_RISK_PROBS: {
@@ -1677,8 +1700,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   HEALTH_SCORE: {
@@ -1760,8 +1784,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['RED', 'LIGHT_RED', 'YELLOW', 'LIGHT_GREEN', 'GREEN']
-      }
+        global: [BandColor.RED, BandColor.LIGHT_RED, BandColor.YELLOW, BandColor.LIGHT_GREEN, BandColor.GREEN]
+      },
+      isInteger: true
     }
   },
   BP_HEART_ATTACK: {
@@ -1843,8 +1868,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   IHB_COUNT: {
@@ -1870,7 +1896,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   },
   MSI: {
@@ -1952,8 +1979,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   BP_STROKE: {
@@ -2035,8 +2063,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   BP_TAU: {
@@ -2118,8 +2147,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['RED', 'LIGHT_RED', 'YELLOW', 'LIGHT_GREEN', 'GREEN']
-      }
+        global: [BandColor.RED, BandColor.LIGHT_RED, BandColor.YELLOW, BandColor.LIGHT_GREEN, BandColor.GREEN]
+      },
+      isInteger: false
     }
   },
   HBA1C_RISK_PROB: {
@@ -2191,8 +2221,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   MFBG_RISK_PROB: {
@@ -2264,8 +2295,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   HPT_RISK_PROB: {
@@ -2337,8 +2369,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   DBT_RISK_PROB: {
@@ -2410,8 +2443,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   HDLTC_RISK_PROB: {
@@ -2483,8 +2517,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   TG_RISK_PROB: {
@@ -2556,8 +2591,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   AGE: {
@@ -2578,7 +2614,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   },
   AGE_CVM: {
@@ -2599,7 +2636,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   },
   FLD_RISK_PROB: {
@@ -2671,8 +2709,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   HEIGHT: {
@@ -2693,7 +2732,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   },
   MENTAL_SCORE: {
@@ -2722,7 +2762,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   OVERALL_METABOLIC_RISK_PROB: {
@@ -2794,8 +2835,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: true
     }
   },
   PHYSICAL_SCORE: {
@@ -2824,7 +2866,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   PHYSIO_SCORE: {
@@ -2853,7 +2896,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   RISKS_SCORE: {
@@ -2882,7 +2926,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   SURVEY_ANXIETY_MODERATE: {
@@ -2910,8 +2955,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: [ 'GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [ BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   SURVEY_DEPRESSION_MODERATE: {
@@ -2939,8 +2985,9 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: [ 'GREEN', 'LIGHT_GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [ BandColor.GREEN, BandColor.LIGHT_GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   VITAL_SCORE: {
@@ -2969,7 +3016,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: false
     }
   },
   WAIST_CIRCUM: {
@@ -2990,7 +3038,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   },
   WAIST_TO_HEIGHT: {
@@ -3324,12 +3373,13 @@ export const DFX_POINTS = {
         ]
       },
       dialBandColors: {
-        global: ['YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        globalMale: ['YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        globalFemale: ['YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        eastAsiaMale: ['YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED'],
-        eastAsiaFemale: ['YELLOW', 'GREEN', 'YELLOW', 'LIGHT_RED', 'RED']
-      }
+        global: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        globalMale: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        globalFemale: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        eastAsiaMale: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED],
+        eastAsiaFemale: [BandColor.YELLOW, BandColor.GREEN, BandColor.YELLOW, BandColor.LIGHT_RED, BandColor.RED]
+      },
+      isInteger: false
     }
   },
   WEIGHT: {
@@ -3350,7 +3400,8 @@ export const DFX_POINTS = {
       },
       dialBandColors: {
         global: []
-      }
+      },
+      isInteger: true
     }
   }
 };
@@ -3392,7 +3443,8 @@ export const parseResults = (results) => {
             },
             dialBandColors: {
                 global: [],
-            }
+            },
+            isInteger: false,
         };
         const defaultInfo = {
             name: '',
@@ -3409,28 +3461,13 @@ export const parseResults = (results) => {
         let scalerValue = '0';
         let arrayValue = [];
         if (resultsType === RESULT_TYPE.SCALAR) {
-            scalerValue = (calculateMedian(Channels[point].Data) / Multiplier).toFixed(2);
+            const rawValue = calculateMedian(Channels[point].Data) / Multiplier;
+            scalerValue = pointMeta.isInteger ? Math.ceil(rawValue).toString() : rawValue.toFixed(2);
         } else {
-            arrayValue = Channels[point].Data.map(v => v / Multiplier);
+            arrayValue = pointMeta.isInteger
+                ? Channels[point].Data.map(v => Math.ceil(v / Multiplier))
+                : Channels[point].Data.map(v => Number((v / Multiplier).toFixed(2)));
         }
-        // if (['CVD_MULTI_YEAR_RISK_PROBS', 'CVD_MULTI_YEAR_RISK_YEARS'].includes(point)) {
-        //     if (point === 'CVD_MULTI_YEAR_RISK_YEARS') return; // Do not return CVD_MULTI_YEAR_RISK_YEARS point as a result
-        //     if (point === 'CVD_MULTI_YEAR_RISK_PROBS') {
-        //         const hasYears = 'CVD_MULTI_YEAR_RISK_YEARS' in Channels;
-        //         const hasProbs = 'CVD_MULTI_YEAR_RISK_PROBS' in Channels;
-        //         if (
-        //             hasYears && hasProbs &&
-        //             Channels['CVD_MULTI_YEAR_RISK_YEARS'].Data.length === Channels['CVD_MULTI_YEAR_RISK_PROBS'].Data.length
-        //         ) {
-        //             const years = Channels['CVD_MULTI_YEAR_RISK_YEARS'].Data.map(v => v / Multiplier);
-        //             const probs = Channels['CVD_MULTI_YEAR_RISK_PROBS'].Data.map(v => v / Multiplier);
-        //             const cvd = { years, probs };
-        //             console.log(`Processing point "${point}" with years:`, cvd);
-        //             // TODO: handle valid CVD multi-year risk data
-        //         }
-        //     }
-        //     return;
-        // }
 
         const range = ranges[population] ?? [];
         const bandColors = dialBandColors[population] ?? [];
@@ -3483,4 +3520,4 @@ export const parseResults = (results) => {
         }
     }
     return result;
-}
+};
