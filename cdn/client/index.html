@@ -14,6 +14,9 @@
           }
         }
     </script>
+    <!-- Stats Widget is not mandatory, but it is useful for debugging and 
+     monitoring the performance of the SDK. You can remove this script if you don't need it. -->
+    <script src="./stats-widget.js"></script>
     <style>
       :root {
         --primary: #3273dc;
@@ -313,6 +316,7 @@
 
       const { CameraController } = helpers;
       const { CAMERA_STATUS, SELECTED_DEVICE_CHANGED, MEDIA_DEVICE_LIST_CHANGED } = CameraControllerEvents;
+      const statsWidget = new StatsWidget();
       let trackerState = faceTrackerState.ASSETS_NOT_DOWNLOADED;
 
       const mediaElement = document.getElementById('measurement');
@@ -575,7 +579,7 @@
             totalSize += uncompressedSize;
             filesDownloaded.push({ name: url, bytes });
           }
-          const TOTAL_SIZE = filesDownloaded.length === 8 ? totalSize : 4337298;
+          const TOTAL_SIZE = filesDownloaded.length === 6 ? totalSize : 6946586;
           percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
           document.getElementById('progress-bar').style.width = `${percentDownloaded}%`;
           if (percentDownloaded === 100) {
@@ -594,6 +598,7 @@
 
         measurement.on.faceTrackerStateChanged = async (state) => {
           trackerState = state;
+          console.log('faceTrackerStateChanged', state);
           if (state === faceTrackerState.LOADED) {
             console.log(measurement.getVersion());
             disableButton('toggle-camera', false);
@@ -604,7 +609,6 @@
             await measurement.startTracking();
             mask.setLoadingState(false);
           }
-          console.log('faceTrackerStateChanged', state);
         };
 
         measurement.on.resultsReceived = async (results) => {
@@ -760,6 +764,7 @@
           // saveToDisk(chunk);
           if (chunkNumber === numberChunks - 1) {
             loading.classList.remove('is-hidden');
+            statsWidget.close();
           }
         };
 
@@ -784,6 +789,7 @@
         };
 
         measurement.on.facialLandmarksUpdated = (drawables) => {
+          statsWidget.set(drawables.stats);
           if (maskList.value == 'tele') {
             mask.draw(drawables);
           } else {

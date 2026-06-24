@@ -50,6 +50,9 @@ export const logMessages = {
   MEASUREMENT_STARTED: 'Measurement started',
   MEASUREMENT_DEMOGRAPHICS_SET: 'Measurement demographics set',
   WEBSOCKET_DISCONNECTED: 'Websocket disconnected',
+  CAMERA_AUTO_SELECTED_DEFAULT_ID: 'Auto-selected camera from defaultCameraId',
+  CAMERA_DEFAULT_ID_NOT_FOUND: 'defaultCameraId did not match any connected device',
+  CAMERA_DEFAULT_ID_IGNORED: 'defaultCameraId ignored because cameraFacingMode is set (cameraFacingMode takes precedence)',
 } as const;
 
 export enum logCategory {

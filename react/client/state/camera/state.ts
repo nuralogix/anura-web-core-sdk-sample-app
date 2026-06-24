@@ -77,16 +77,28 @@ const cameraState: CameraState = proxy({
     }));
     cameraState.mediaDevices = [...mediaDevices];
 
-    // Apply facing mode preference after enumeration
-    const { cameraFacingMode } = configState.config;
-    if (cameraFacingMode && mediaDevices.length > 0) {
-      const preferredDevice = findDeviceByFacingMode(mediaDevices, cameraFacingMode);
-      if (preferredDevice) {
-        camera.setDeviceId(preferredDevice.device.deviceId);
-        loggerState.addLog(
-          `Auto-selected ${cameraFacingMode} camera: ${preferredDevice.device.label}`,
-          logCategory.camera
-        );
+    const { defaultCameraId, cameraFacingMode } = configState.config;
+
+    // cameraFacingMode takes precedence over defaultCameraId
+    if (cameraFacingMode && defaultCameraId) {
+      loggerState.addLog(logMessages.CAMERA_DEFAULT_ID_IGNORED, logCategory.camera, {
+        cameraFacingMode,
+        defaultCameraId,
+      });
+    } else {
+      if (defaultCameraId) {
+        const match = mediaDevices.find((d) => d.device.deviceId === defaultCameraId);
+        if (match) {
+          camera.setDeviceId(defaultCameraId);
+          loggerState.addLog(logMessages.CAMERA_AUTO_SELECTED_DEFAULT_ID, logCategory.camera, {
+            deviceId: match.device.deviceId,
+            label: match.device.label,
+          });
+        } else {
+          loggerState.addLog(logMessages.CAMERA_DEFAULT_ID_NOT_FOUND, logCategory.camera, {
+            defaultCameraId,
+          });
+        }
       }
     }
 
@@ -96,26 +108,6 @@ const cameraState: CameraState = proxy({
     camera.setDeviceId(deviceId);
   },
 });
-
-// Helper function to find device by facing mode
-const findDeviceByFacingMode = (
-  mediaDevices: MediaDevice[],
-  facingMode: string
-): MediaDevice | null => {
-  return (
-    mediaDevices.find((device) => {
-      const capabilities = device.capabilities;
-      if (capabilities && 'facingMode' in capabilities && capabilities.facingMode) {
-        // Handle both string and array facingMode values
-        const deviceFacingModes = Array.isArray(capabilities.facingMode)
-          ? capabilities.facingMode
-          : [capabilities.facingMode];
-        return deviceFacingModes.includes(facingMode);
-      }
-      return false;
-    }) || null
-  );
-};
 
 const camera = CameraController.init();
 
