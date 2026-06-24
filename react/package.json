@@ -1,6 +1,6 @@
 {
   "name": "nuralogix-anura-web-core-sdk-sample-app-react",
-  "version": "0.1.0-beta.13",
+  "version": "0.1.0-beta.16",
   "description": "Nuralogix Aura Web core SDK Sample App - React",
   "homepage": "https://docs.deepaffex.ai/web-core/",
   "contributors": [
@@ -61,7 +61,7 @@
     "typescript-eslint": "^8.25.0"
   },
   "dependencies": {
-    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-beta.13",
+    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-beta.16",
     "@nuralogix.ai/web-ui": "^0.1.0-alpha.14",
     "@stylexjs/stylex": "0.9.3",
     "i18next": "^24.2.3",
@@ -73,7 +73,7 @@
     "valtio": "^2.1.5"
   },
   "engines": {
-    "node": ">=25"
+    "node": ">=26"
   },
   "browserslist": [
     "Safari >= 18",

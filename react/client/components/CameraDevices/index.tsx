@@ -1,4 +1,4 @@
-import { useEffect, ReactNode } from 'react';
+import { useEffect, useRef, ReactNode } from 'react';
 import { useSnapshot } from 'valtio';
 import state from '../../state';
 import CameraSelector from '../CameraSelector';
@@ -14,13 +14,19 @@ const CameraDevices = () => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
+  // Enumerate once after permission. Not gated on enumerationPhase: on iOS the SDK's
+  // own devicechange handler can mark enumeration Done before this runs, which would
+  // skip listCameras and drop the defaultCameraId selection.
+  const hasEnumeratedRef = useRef(false);
+
   useEffect(() => {
     (async () => {
-      if (isPermissionGranted && enumerationPhase === CameraEnumerationPhase.Idle) {
+      if (isPermissionGranted && !hasEnumeratedRef.current) {
+        hasEnumeratedRef.current = true;
         await state.camera.listCameras();
       }
     })();
-  }, [isPermissionGranted, enumerationPhase]);
+  }, [isPermissionGranted]);
 
   const isEnumerating = enumerationPhase === CameraEnumerationPhase.Enumerating;
   const isDone = enumerationPhase === CameraEnumerationPhase.Done;

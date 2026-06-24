@@ -534,7 +534,7 @@
             totalSize += uncompressedSize;
             filesDownloaded.push({ name: url, bytes });
           }
-          const TOTAL_SIZE = filesDownloaded.length === 8 ? totalSize : 4337298;
+          const TOTAL_SIZE = filesDownloaded.length === 6 ? totalSize : 6946586;
           percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
           document.getElementById('progress-bar').style.width = `${percentDownloaded}%`;
           if (percentDownloaded === 100) {
@@ -553,6 +553,7 @@
 
         measurement.on.faceTrackerStateChanged = async (state) => {
           trackerState = state;
+          console.log('faceTrackerStateChanged', state);
           if (state === faceTrackerState.LOADED) {
             console.log(measurement.getVersion());
             disableButton('toggle-video', false);
@@ -563,7 +564,6 @@
             await measurement.startTracking();
             mask.setLoadingState(false);
           }
-          console.log('faceTrackerStateChanged', state);
         };
 
         measurement.on.resultsReceived = async (results) => {

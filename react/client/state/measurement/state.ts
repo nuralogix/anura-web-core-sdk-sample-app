@@ -196,7 +196,7 @@ const measurementState: MeasurementState = proxy({
         totalSize += uncompressedSize;
         filesDownloaded.push({ name: url, bytes });
       }
-      const TOTAL_SIZE = filesDownloaded.length === 8 ? totalSize : 4337298;
+      const TOTAL_SIZE = filesDownloaded.length === 6 ? totalSize : 6946586;
 
       measurementState.percentDownloaded = Math.min(
         100,

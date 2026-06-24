@@ -246,7 +246,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         totalSize += uncompressedSize;
         filesDownloaded.push({ name: url, bytes });
       }
-      const TOTAL_SIZE = filesDownloaded.length === 7 ? totalSize : 9_000_000;
+      const TOTAL_SIZE = filesDownloaded.length === 6 ? totalSize : 6946586;
       percentDownloaded = Math.min(100, Math.trunc((bytesDownloaded * 100) / TOTAL_SIZE));
       document.getElementById('progress-bar')!.style.width = `${percentDownloaded}%`;
       if (percentDownloaded === 100) {
@@ -265,6 +265,7 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
 
     measurement.on.faceTrackerStateChanged = async (state: FaceTrackerState) => {
       trackerState = state;
+      console.log('faceTrackerStateChanged', state);
       if (state === faceTrackerState.LOADED) {
           console.log(measurement.getVersion());
           disableButton('toggle-camera', false);
@@ -275,7 +276,6 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
         await measurement.startTracking();
          mask.setLoadingState(false);
       }
-      console.log('faceTrackerStateChanged', state);
     };
 
     measurement.on.resultsReceived = async (results: DFXResults) => {
