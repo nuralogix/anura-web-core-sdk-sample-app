@@ -235,6 +235,25 @@ export const getPreMeasurementMessageAndConstraints = (
   return { message: '', constraints: null, code: null } as const;
 };
 
+// Guidance shown DURING an active measurement. Unlike pre-measurement (which enforces the full
+// constraint set), once the countdown is running we only guard the two things that silently break
+// a measurement: the face being lost, and the user leaning in too close (face grows too large for
+// the detector → tracker loses lock → collector "Delay between frames" error). Surfacing these as
+// text turns an unexplained countdown freeze into actionable feedback so the user can recover
+// before the collector errors out.
+export const getDuringMeasurementMessage = (
+  drawables: Drawables,
+  checkConstraints: boolean,
+  mask: AnuraMask
+): string => {
+  if (!drawables.face.detected) return i18next.t('FACE_NOT_DETECTED');
+  if (checkConstraints) {
+    const { distanceConstraint } = mask.checkConstraints(drawables.face, drawables.annotations);
+    if (distanceConstraint === constraintCodes.DISTANCE.TOO_CLOSE) return i18next.t('MOVE_BACK');
+  }
+  return '';
+};
+
 // Controller to stabilize guidance messages and avoid redundant mask.setText updates
 export const createMessageController = (
   mask: AnuraMask,
@@ -300,18 +319,26 @@ export const createMessageController = (
   return { feed, clear } as const;
 };
 
-// Helper to construct constraint overrides based on whether we enforce constraints or not
-export const buildConstraintOverrides = (checkConstraints: boolean) => ({
-  minimumFps: 14,
-  boxWidth_pct: 100,
-  boxHeight_pct: 100,
-  checkBackLight: false,
-  checkCameraMovement: false,
-  checkCentered: false,
-  checkDistance: checkConstraints,
-  checkEyebrowMovement: false,
-  checkFaceDirection: checkConstraints,
-  checkLighting: false,
-  checkMinFps: true,
-  checkMovement: checkConstraints,
-});
+// Helper to construct the SDK constraint overrides. We intentionally leave the SDK's
+// distance/direction/movement checks OFF: the app does NOT consume the SDK's constraintsUpdated
+// callback — it derives all its own guidance (move back / centered / hold still) from
+// mask.checkConstraints + drawables.annotations, which the SDK produces regardless. Enabling those
+// SDK checks only added redundant per-frame main-thread work
+// `checkConstraints` still drives the app's own guidance logic elsewhere; it isn't needed here.
+export const buildConstraintOverrides = (checkConstraints: boolean) => {
+  void checkConstraints;
+  return {
+    minimumFps: 14,
+    boxWidth_pct: 100,
+    boxHeight_pct: 100,
+    checkBackLight: false,
+    checkCameraMovement: false,
+    checkCentered: false,
+    checkDistance: false,
+    checkEyebrowMovement: false,
+    checkFaceDirection: false,
+    checkLighting: false,
+    checkMinFps: true,
+    checkMovement: false,
+  };
+};

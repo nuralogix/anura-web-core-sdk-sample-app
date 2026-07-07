@@ -465,9 +465,10 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
     };
 
     measurement.on.facialLandmarksUpdated = (drawables: Drawables) => {
+          const isPreMeasurement = drawables.percentCompleted === 0;
           mask.setText('');
           const { DISTANCE, DIRECTION, ROLL, CENTER, MOVEMENT } = constraintCodes;
-          if (drawables.percentCompleted === 0) {
+          if (isPreMeasurement) {
             const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
             const {
                 distanceConstraint,
@@ -503,10 +504,22 @@ if (mediaElement && mediaElement instanceof HTMLDivElement) {
             mask.setText(message);
             mask.draw(drawables, constraints);
           } else {
-            mask.draw(drawables);
-          }
-          if (drawables.percentCompleted >= 100) {
-            mask.setLoadingState(true);
+              if (drawables.percentCompleted >= 100) {
+                // Countdown has reached 0 — switch the mask to its loading/waiting animation rather than
+                // leaving the "0" frozen while the final chunk uploads and results are awaited
+                // draw() is a no-op while loading, so this also stops redrawing the 0.
+                mask.setLoadingState(true);
+              } else {
+                const { distanceConstraint } = mask.checkConstraints(drawables.face, drawables.annotations);
+                // While the countdown runs, leaning in too close can cause the tracker to 
+                // lose lock and the collector to error out.
+                if (distanceConstraint === constraintCodes.DISTANCE.TOO_CLOSE) {
+                  mask.setText('Move Back');
+                } else {
+                  mask.setText('');
+                }
+                mask.draw(drawables);
+              }
           }
           if (!drawables.face.detected) {
             mask.setText('Face Not Detected', 'DEFAULT');
