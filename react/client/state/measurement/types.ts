@@ -3,6 +3,7 @@ import type {
   FaceTrackerState,
   MeasurementOptions,
   DFXResults,
+  Measurement,
 } from '@nuralogix.ai/anura-web-core-sdk';
 import type { ConstraintCode } from './utils';
 
@@ -42,14 +43,7 @@ export interface MeasurementState {
   init: (mediaElement: HTMLDivElement) => Promise<void>;
   setTrackerState: (state: FaceTrackerState) => void;
   setApiUrl: (apiUrl: string | undefined) => void;
-  getVersion: () => {
-    webSDK: string;
-    extractionLib: {
-      version: string;
-      sdkId: string;
-    };
-    faceTracker: string;
-  };
+  getVersion: () => ReturnType<Measurement['getVersion']>;
   reset: () => Promise<boolean>;
   resetSession: () => void;
   resetRun: () => void;

@@ -390,7 +390,7 @@
             boxHeight_pct: 100,
             checkBackLight: false,
             checkCameraMovement: false,
-            checkCentered: true,
+            checkCentered: false,
             checkDistance: false,
             checkEyebrowMovement: false,
             checkFaceDirection: false,
@@ -789,12 +789,13 @@
         };
 
         measurement.on.facialLandmarksUpdated = (drawables) => {
+          const isPreMeasurement = drawables.percentCompleted === 0;
           statsWidget.set(drawables.stats);
           if (maskList.value == 'tele') {
             mask.draw(drawables);
           } else {
             mask.setText('');
-            if (drawables.percentCompleted === 0) {
+            if (isPreMeasurement) {
               const constraints = mask.checkConstraints(drawables.face, drawables.annotations);
               const { distanceConstraint, directionConstraint, rollConstraint, centerConstraint, movementConstraint } = constraints;
               let message = '';
@@ -824,14 +825,26 @@
               mask.setText(message);
               mask.draw(drawables, constraints);
             } else {
-              mask.draw(drawables);
+              if (drawables.percentCompleted >= 100) {
+                // Countdown has reached 0 — switch the mask to its loading/waiting animation rather than
+                // leaving the "0" frozen while the final chunk uploads and results are awaited
+                // draw() is a no-op while loading, so this also stops redrawing the 0.
+                mask.setLoadingState(true);
+              } else {
+                const { distanceConstraint } = mask.checkConstraints(drawables.face, drawables.annotations);
+                // While the countdown runs, leaning in too close can cause the tracker to 
+                // lose lock and the collector to error out.
+                if (distanceConstraint === constraintCodes.DISTANCE.TOO_CLOSE) {
+                  mask.setText('Move Back');
+                } else {
+                  mask.setText('');
+                }
+                mask.draw(drawables);
+              }
             }
             if (!drawables.face.detected) {
               mask.setText('Face Not Detected', 'DEFAULT');
             }
-          }
-          if (drawables.percentCompleted >= 100) {
-            mask.setLoadingState(true);
           }
         }
 

@@ -1,6 +1,6 @@
 {
   "name": "anura-web-core-sdk-typescript-sample-app",
-  "version": "0.1.0-beta.16",
+  "version": "0.1.0-beta.17",
   "description": "Anura Web Core SDK - Typescript",
   "author": "Hamed Hassanzadeh Amin",
   "main": "src/index.ts",
@@ -12,7 +12,7 @@
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-beta.16"
+    "@nuralogix.ai/anura-web-core-sdk": "^0.1.0-beta.17"
   },
   "devDependencies": {
     "@rollup/plugin-html": "^2.0.0",
@@ -26,5 +26,12 @@
     "rollup-plugin-esbuild": "^6.1.1",
     "rollup-plugin-postcss": "^4.0.2",
     "typescript": "^5.7.3"
-  }
+  },
+  "engines": {
+    "node": ">=26"
+  },
+  "browserslist": [
+    "Safari >= 18",
+    "last 3 versions"
+  ]
 }

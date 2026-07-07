@@ -22,6 +22,7 @@ import { proxy } from 'valtio';
 import { MeasurementState, Profile, MeasurementPhase } from './types';
 import { restActionIds } from '../../config/constants';
 import loggerState from '../logger/state';
+import { statsBus } from '../../components/StatsWidget/statsBus';
 import generalState from '../general/state';
 import { logCategory, logMessages } from '../logger/types';
 import {
@@ -30,6 +31,7 @@ import {
   shouldCancelForLowSNR,
   resetLowSNRCount,
   getPreMeasurementMessageAndConstraints,
+  getDuringMeasurementMessage,
   createMessageController,
   buildConstraintOverrides,
   profileValidationMessages,
@@ -380,8 +382,22 @@ const measurementState: MeasurementState = proxy({
     };
 
     measurement.on.chunkSent = (chunk: ChunkSent) => {
-      loggerState.addLog(logMessages.CHUNK_SENT, logCategory.measurement, chunk);
-      const { chunkNumber, numberChunks } = chunk;
+      // Log a lightweight summary only — never the chunk's `payload`/`metadata` Uint8Arrays.
+      // addLog deep-clones meta with JSON.parse(JSON.stringify(...)), and stringifying a multi-MB
+      // typed array (each byte becomes "0":n,"1":n,...) blocks the main thread for hundreds of ms
+      // every chunk, which shows up as a periodic stutter in the countdown animation.
+      const { chunkNumber, numberChunks, startTime_s, endTime_s, duration_s, action, measurementId } = chunk;
+      loggerState.addLog(logMessages.CHUNK_SENT, logCategory.measurement, {
+        chunkNumber,
+        numberChunks,
+        startTime_s,
+        endTime_s,
+        duration_s,
+        action,
+        measurementId,
+        payloadBytes: chunk.payload?.length ?? 0,
+        metadataBytes: chunk.metadata?.length ?? 0,
+      });
       const isLastChunk = chunkNumber === numberChunks - 1;
       if (isLastChunk && measurementState.measurementPhase === MeasurementPhase.InProgress) {
         measurementState.measurementPhase = MeasurementPhase.Analyzing;
@@ -389,13 +405,15 @@ const measurementState: MeasurementState = proxy({
         mask.setMaskVisibility(false);
       }
       if (configState.config.downloadPayloads) {
-        const { measurementId, payload, metadata } = chunk;
+        const { payload, metadata } = chunk;
         downloadFile(payload, `${measurementId}-payload-${chunkNumber}.bin`);
         downloadFile(metadata, `${measurementId}-metadata-${chunkNumber}.bin`);
       }
     };
 
     measurement.on.facialLandmarksUpdated = (drawables) => {
+      // Feed the debug stats overlay (no-op unless the StatsWidget is mounted, i.e. saveLogs on).
+      statsBus.push(drawables.stats);
       const isPreMeasurement = drawables.percentCompleted === 0;
       const isMeasuring = measurementState.measurementPhase === MeasurementPhase.InProgress;
       const { checkConstraints } = configState.config;
@@ -428,9 +446,20 @@ const measurementState: MeasurementState = proxy({
           mask.draw(drawables);
         }
       } else {
-        // During measurement, suppress guidance immediately and just draw
-        messageController.clear();
-        mask.draw(drawables);
+        if (drawables.percentCompleted >= 100) {
+          // Countdown has reached 0 — switch the mask to its loading/waiting animation rather than
+          // leaving the "0" frozen while the final chunk uploads and results are awaited
+          // draw() is a no-op while loading, so this also stops redrawing the 0.
+          messageController.clear();
+          mask.setLoadingState(true);
+        } else {
+          // While the countdown runs, guard the two failure modes that otherwise freeze it
+          // silently and end in a collector error: a lost face, or leaning in too close. Fed
+          // through messageController so it's stabilized (no single-frame flicker) and dedupes
+          // mask.setText. Empty string clears the guidance when the face is fine.
+          messageController.feed(getDuringMeasurementMessage(drawables, checkConstraints, mask));
+          mask.draw(drawables);
+        }
       }
     };
 

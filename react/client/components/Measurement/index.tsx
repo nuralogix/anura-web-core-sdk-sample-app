@@ -11,6 +11,7 @@ import MeasurementFooter from './MeasurementFooter';
 import ResettingOverlay from './ResettingOverlay';
 import AnalyzingOverlay from './AnalyzingOverlay';
 import TrackerSpinner from './TrackerSpinner';
+import StatsWidget from '../StatsWidget';
 
 const styles = stylex.create({
   container: {
@@ -61,6 +62,7 @@ const Measurement = () => {
   const { t } = useTranslation();
   const { ASSETS_NOT_DOWNLOADED, NOT_LOADED, LOADING } = trackingState;
   const { config } = useSnapshot(state.config);
+  const { saveLogs } = useSnapshot(state.logger);
   const measurementSnap = useSnapshot(state.measurement);
   useMeasurement(); // All measurement side effects
   const cameraSnap = useSnapshot(state.camera);
@@ -118,6 +120,9 @@ const Measurement = () => {
           <MeasurementFooter deviceId={deviceId} />
         </div>
       )}
+      {/* Debug performance overlay — only while logging is on AND the tracker is loaded/ready
+          (i.e. the SDK is tracking frames). Lives here so it never shows on login/results. */}
+      {saveLogs && isFaceTrackerLoaded && <StatsWidget />}
     </div>
   );
 };

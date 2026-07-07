@@ -1,5 +1,35 @@
-import { proxy } from 'valtio';
+import { proxy, ref } from 'valtio';
 import { Log, logCategory, LoggerState } from './types';
+
+// Deep-clone a value into a plain, navigable object for logging — so DevTools shows real objects
+// instead of Proxy(Object). It reads properties (going through ANY proxy's get trap: valtio,
+// native, or the SDK's recursive readonly proxy), tracks visited objects to survive circular
+// references, and drops functions. structuredClone throws on proxies and JSON.parse(JSON.stringify)
+// throws on cycles, so neither alone handles the SDK's deeply-proxied objects (e.g. getVersion()).
+const toPlain = (value: unknown, seen = new WeakMap<object, unknown>()): unknown => {
+  if (value === null || typeof value !== 'object') return value;
+  const obj = value as Record<string, unknown>;
+  if (seen.has(obj)) return seen.get(obj);
+  if (Array.isArray(value)) {
+    const arr: unknown[] = [];
+    seen.set(obj, arr);
+    for (const item of value) arr.push(toPlain(item, seen));
+    return arr;
+  }
+  const out: Record<string, unknown> = {};
+  seen.set(obj, out);
+  for (const key of Object.keys(obj)) {
+    let v: unknown;
+    try {
+      v = obj[key];
+    } catch {
+      continue; // skip properties whose getter throws
+    }
+    if (typeof v === 'function') continue;
+    out[key] = toPlain(v, seen);
+  }
+  return out;
+};
 
 export const getTimestamp = () => {
   const date = new Date();
@@ -23,35 +53,6 @@ export const getTimestamp = () => {
 };
 
 
-const colorizeJson = (obj: any) => {
-  const json = JSON.stringify(obj, null, 2);
-  const regex = /("(?:\\[\s\S]|[^"\\])*"(?:\s*:)?)|(true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)|([\{\}\[\]\,])|(\s+)/g;
-  let fmt = '';
-  const args: string[] = [];
-  let match;
-  while ((match = regex.exec(json)) !== null) {
-    if (match[1]) {
-      if (/:$/.test(match[1])) {
-        fmt += '%c' + match[1];
-        args.push('color: red');
-      } else {
-        fmt += '%c' + match[1];
-        args.push('color: blue');
-      }
-    } else if (match[2]) {
-      fmt += '%c' + match[2];
-      args.push('color: blue');
-    } else if (match[3]) {
-      fmt += '%c' + match[3];
-      args.push('color: black');
-    } else if (match[4]) {
-      fmt += '%c' + match[4];
-      args.push('color: inherit');
-    }
-  }
-  return { fmt, args };
-};
-
 const loggerState: LoggerState = proxy({
   logs: [] as Log[],
   saveLogs: process.env.IS_DEVELOPMENT as unknown as boolean,
@@ -59,49 +60,38 @@ const loggerState: LoggerState = proxy({
     loggerState.saveLogs = save;
   },
   addLog: (message: string, category: logCategory, meta: any) => {
+    // Do nothing when logging is off — no unwrap, no console, no array growth.
+    if (!loggerState.saveLogs) return;
     const timestamp = getTimestamp();
-    const normalizedMeta =
-      typeof meta === 'undefined' ? undefined : JSON.parse(JSON.stringify(meta));
-    if (loggerState.saveLogs) {
-      const text2 = `[${category}]`;
-      const text3 = "  ";
-      const style1 = `color:${'blue'}; font-weight:800;`;
-      const style2 = `color:${loggerState.getCategoryColor(category)}; font-weight:700;`;
-      const style3 = "background:inherit;";
-      const style4 = "font-style: italic;";
-      const style5 = "font-style: normal; font-weight: normal; color: black;";
-
-      let extraFormat = '';
-      const extraArgs: string[] = [];
-
-      if (typeof normalizedMeta !== 'undefined') {
-        const { fmt, args } = colorizeJson(normalizedMeta);
-        // check the size of args before pushing data to extraArgs.
-        // If args.length exceeds 1000, it falls back to logging the
-        // metadata separately using console.log(meta), avoiding the
-        // stack overflow while still preserving the log information
-        if (args.length > 1000) {
-          console.log(
-            '%c%s%c%s%c%s%c%s',
-            style1,
-            timestamp,
-            style2,
-            text2,
-            style3,
-            text3,
-            style4,
-            message
-          );
-          console.log(normalizedMeta);
-          return;
-        }
-        extraFormat = "%c\n" + fmt;
-        extraArgs.push(style5, ...args);
-      }
-
-      console.log("%c%s%c%s%c%s%c%s" + extraFormat, style1, timestamp, style2, text2, style3, text3, style4, message, ...extraArgs);
+    const normalizedMeta = typeof meta === 'undefined' ? undefined : toPlain(meta);
+    // Log a small styled prefix and hand the meta to console.log as a plain object. DevTools
+    // renders objects lazily (collapsed, natively syntax-highlighted), so this stays cheap.
+    // The previous colorizeJson approach emitted one `%c` style arg per JSON token (hundreds
+    // per object); with DevTools open, building and rendering those synchronously blocked the
+    // main thread long enough to starve the on-main-thread ONNX frame pipeline and break the
+    // measurement (the collector's >500ms frame-gap error). See the removed colorizeJson.
+    const style1 = 'color:blue; font-weight:800;';
+    const style2 = `color:${loggerState.getCategoryColor(category)}; font-weight:700;`;
+    const style4 = 'font-style:italic;';
+    if (typeof normalizedMeta !== 'undefined') {
+      console.log('%c%s %c[%s] %c%s', style1, timestamp, style2, category, style4, message, normalizedMeta);
+    } else {
+      console.log('%c%s %c[%s] %c%s', style1, timestamp, style2, category, style4, message);
     }
-    const log: Log = { message, category, timestamp, meta: normalizedMeta };
+    // Store the meta wrapped in valtio ref() so valtio does NOT deep-proxy it. Without this,
+    // pushing into loggerState.logs (a valtio proxy) recursively converts the meta's nested
+    // objects into valtio proxies IN PLACE — mutating the very object we just passed to
+    // console.log, so DevTools (which renders lazily on expand) showed Proxy(Object). This,
+    // not the unwrap, was the actual cause of the proxies in the logs.
+    const log: Log = {
+      message,
+      category,
+      timestamp,
+      meta:
+        normalizedMeta !== null && typeof normalizedMeta === 'object'
+          ? ref(normalizedMeta as object)
+          : normalizedMeta,
+    };
     loggerState.logs.push(log);
   },
   getCategoryColor(category: logCategory) {

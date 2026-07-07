@@ -3,8 +3,6 @@ import { MeasurementPhase } from '../state/measurement/types';
 import { CAMERA_WIDTH, CAMERA_HEIGHT } from '../config/constants';
 import loggerState from '../state/logger/state';
 import { logCategory, logMessages } from '../state/logger/types';
-import generalState from '../state/general/state';
-import { ErrorCodes } from '../types';
 
 /**
  * Stop camera stream and hide mask. Does NOT reset measurement or reinit mask.
@@ -48,11 +46,7 @@ export const stopMeasurementAndReset = async () => {
 export const startCameraStream = async () => {
   const success = await state.camera.start(CAMERA_WIDTH, CAMERA_HEIGHT);
   if (success) {
-    loggerState.addLog(logMessages.CAMERA_STARTED, logCategory.camera);
     state.measurement.setMaskVisibility(true);
-  } else {
-    loggerState.addLog(logMessages.CAMERA_START_FAILED, logCategory.camera);
-    generalState.setErrorCode(ErrorCodes.CAMERA_START_FAILED);
   }
   return success;
 };

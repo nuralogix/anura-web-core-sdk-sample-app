@@ -4,10 +4,6 @@ import state from '../state';
 import useCanStartMeasurement from './useCanStartMeasurement';
 import useMeasurementPhase from './useMeasurementPhase';
 import { CAMERA_HEIGHT, CAMERA_WIDTH } from '../config/constants';
-import loggerState from '../state/logger/state';
-import { logCategory, logMessages } from '../state/logger/types';
-import generalState from '../state/general/state';
-import { ErrorCodes } from '../types';
 
 /**
  * Custom hook to handle auto-start functionality for camera and measurement
@@ -34,11 +30,7 @@ export const useAutoStart = () => {
       (async () => {
         const success = await state.camera.start(CAMERA_WIDTH, CAMERA_HEIGHT);
         if (success) {
-          loggerState.addLog(logMessages.CAMERA_STARTED, logCategory.camera);
           state.measurement.setMaskVisibility(true);
-        } else {
-          loggerState.addLog(logMessages.CAMERA_START_FAILED, logCategory.camera);
-          generalState.setErrorCode(ErrorCodes.CAMERA_START_FAILED);
         }
       })();
     }
