@@ -148,10 +148,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@nuralogix.ai/anura-web-core-sdk@^0.1.0-beta.17":
-  version "0.1.0-beta.17"
-  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-beta.17.tgz#9a444b925e95c6744c5764f9e1144696918f9610"
-  integrity sha512-WVTMchAaQrYjNkM8l3iofjfEGzbcoIGCg1zXM/S0ELvL7iCCjnOFMJUm9ROe97W+me7cP6LA8k0YH8cvt+oamQ==
+"@nuralogix.ai/anura-web-core-sdk@^0.1.0-beta.18":
+  version "0.1.0-beta.18"
+  resolved "https://registry.yarnpkg.com/@nuralogix.ai/anura-web-core-sdk/-/anura-web-core-sdk-0.1.0-beta.18.tgz#11b2e3625927a2600c39be0f2484ef84939acbca"
+  integrity sha512-ZuZ6Au05s+qAkYQ2MFW7lKwIqSPCSRAIDlpr0tr/VF5FA56U0v54qD2epWCxELUgj0zrPeoAzDohBz6wK+3JDA==
 
 "@protobufjs/aspromise@^1.1.1", "@protobufjs/aspromise@^1.1.2":
   version "1.1.2"
@@ -1039,7 +1039,7 @@ onnxruntime-common@1.27.0:
   resolved "https://registry.yarnpkg.com/onnxruntime-common/-/onnxruntime-common-1.27.0.tgz#fdff2f9ab3d509148a0a8c8721a3b9f288b41ee9"
   integrity sha512-3KxL5wIVqa8Ex08jxSzncm9CMgw8CjOFyOQ7SxvG9o0cVLlhTNKXyIQuTbtX4tGPJEf73OER2xrjt4HJSBL4ow==
 
-onnxruntime-web@^1.26.0:
+onnxruntime-web@^1.27.0:
   version "1.27.0"
   resolved "https://registry.yarnpkg.com/onnxruntime-web/-/onnxruntime-web-1.27.0.tgz#3cfdf3e5f5d554098b5a729b7603d7686d2f69b4"
   integrity sha512-ogDLsqIozHZwifPuN37OproAo0byX6t43/bP8GzeZWBWD6MOGExswFAx3up4NS/vvWBOg2u2PXomDt3rMmdQSg==

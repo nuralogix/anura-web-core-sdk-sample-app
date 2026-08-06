@@ -10,7 +10,7 @@ import useIsMobile from '../../hooks/useIsMobile';
 const CameraDevices = () => {
   const cameraSnap = useSnapshot(state.camera);
   const configSnap = useSnapshot(state.config);
-  const { isPermissionGranted, enumerationPhase, mediaDevices } = cameraSnap;
+  const { isPermissionGranted, enumerationPhase, mediaDevices, isOpen } = cameraSnap;
   const { t } = useTranslation();
   const isMobile = useIsMobile();
 
@@ -38,8 +38,16 @@ const CameraDevices = () => {
     content = <Loading small />;
   } else if (isDone && !hasDevices) {
     content = <Paragraph variant="error">{t('NO_DEVICES_FOUND')}</Paragraph>;
-  } else if (!configSnap.config.cameraAutoStart && !isMobile) {
-    // Only show selector when auto start is disabled and not on mobile
+  } else if (
+    !configSnap.config.cameraAutoStart &&
+    !configSnap.config.cameraFacingMode &&
+    !isMobile &&
+    !isOpen
+  ) {
+    // Only show selector when auto start is disabled, no facing mode is set, not on mobile, and no
+    // camera is open. When cameraFacingMode is set the browser chooses the device (it takes
+    // precedence over defaultCameraId), so a manual picker would be meaningless. Once a camera is
+    // open, the user must close it before switching devices.
     content = <CameraSelector />;
   }
 
