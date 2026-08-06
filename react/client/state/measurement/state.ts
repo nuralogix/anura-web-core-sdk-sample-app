@@ -38,15 +38,16 @@ import {
 } from './utils';
 import { ErrorCodes} from '../../types';
 import configState from '../config/state';
-import { ANURA_MASK_SETTINGS, MESSAGE_REQUIRED_FRAMES, NO_FACE_FRAME_THRESHOLD } from './constants';
+import { ANURA_MASK_SETTINGS, MESSAGE_REQUIRED_FRAMES } from './constants';
 import { loadSavedProfile, saveProfile } from '../../utils/localStorage';
+import { createZip, type ZipEntry } from '../../utils/zip';
 
 const { ASSETS_NOT_DOWNLOADED } = faceTrackerState;
 const { SEX_ASSIGNED_MALE_AT_BIRTH, SMOKER_FALSE, BLOOD_PRESSURE_MEDICATION_FALSE, DIABETES_NONE } =
   faceAttributeValue;
 
-const downloadFile = (data: Uint8Array, filename: string) => {
-  const blob = new Blob([data.buffer as ArrayBuffer], { type: 'application/octet-stream' });
+const downloadFile = (data: Uint8Array, filename: string, mimeType = 'application/octet-stream') => {
+  const blob = new Blob([data.buffer as ArrayBuffer], { type: mimeType });
   const url = window.URL.createObjectURL(blob);
   const link = window.document.createElement('a');
   link.href = url;
@@ -69,13 +70,24 @@ const isIOS = () => {
 const shouldSwapCoordinates = () =>
   isIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
 
+// Whether the preview + mask should be horizontally mirrored (selfie view). True by default; flipped
+// to false once we detect the integrator asked for the rear camera AND a rear-facing device actually
+// opened (see setMediaStream). mirrorVideo (Settings) and shouldFlipHorizontally (mask) are one
+// logical setting split across the Measurement module and the mask, so they must always match.
+let shouldMirror = true;
+
 // Get mask settings with iOS coordinate fix
 const getMaskSettings = () => {
   return {
     ...ANURA_MASK_SETTINGS,
+    shouldFlipHorizontally: shouldMirror,
     ...(shouldSwapCoordinates() && { swapCoordinates: true }),
   };
 };
+
+// Accumulates each measurement chunk's payload/metadata when downloadPayloads is on, so they can be
+// emitted as a single .zip at the end of the measurement instead of one download per chunk.
+const payloadChunks = new Map<number, { payload: Uint8Array; metadata: Uint8Array }>();
 
 const initMeasurement = async (
   mediaElement: HTMLDivElement,
@@ -87,7 +99,9 @@ const initMeasurement = async (
     mediaElement,
     assetFolder,
     apiUrl,
-    mirrorVideo: true,
+    // Initial value; the actual camera facing mode isn't known until the stream opens, so this is
+    // reconciled in setMediaStream (kept in sync with the mask's shouldFlipHorizontally).
+    mirrorVideo: shouldMirror,
     displayMediaStream: true,
     metrics: false,
     logger: {
@@ -121,7 +135,6 @@ let measurement: Measurement | null = null;
 let bytesDownloaded = 0;
 let filesDownloaded: { name: string; bytes: number }[] = [];
 let totalSize = 0;
-let noFaceFrameCount = 0;
 
 let messageController: ReturnType<typeof createMessageController>;
 
@@ -398,16 +411,30 @@ const measurementState: MeasurementState = proxy({
         payloadBytes: chunk.payload?.length ?? 0,
         metadataBytes: chunk.metadata?.length ?? 0,
       });
+      // Capture the phase BEFORE the flip below: only chunks produced during the actual measurement
+      // (InProgress) should be archived, not the pre-measurement/tracking ones.
+      const isMeasuring = measurementState.measurementPhase === MeasurementPhase.InProgress;
       const isLastChunk = chunkNumber === numberChunks - 1;
-      if (isLastChunk && measurementState.measurementPhase === MeasurementPhase.InProgress) {
+      if (isLastChunk && isMeasuring) {
         measurementState.measurementPhase = MeasurementPhase.Analyzing;
         mask.setLoadingState(true);
         mask.setMaskVisibility(false);
       }
-      if (configState.config.downloadPayloads) {
+      if (isMeasuring && configState.config.downloadPayloads) {
         const { payload, metadata } = chunk;
-        downloadFile(payload, `${measurementId}-payload-${chunkNumber}.bin`);
-        downloadFile(metadata, `${measurementId}-metadata-${chunkNumber}.bin`);
+        // Collect each chunk's files and emit them as one .zip on the final chunk.
+        payloadChunks.set(chunkNumber, { payload, metadata });
+        if (isLastChunk) {
+          const entries: ZipEntry[] = [];
+          for (const [n, files] of [...payloadChunks.entries()].sort((a, b) => a[0] - b[0])) {
+            entries.push(
+              { name: `payload-${n}.bin`, data: files.payload },
+              { name: `metadata-${n}.bin`, data: files.metadata }
+            );
+          }
+          downloadFile(createZip(entries), `${measurementId}.zip`, 'application/zip');
+          payloadChunks.clear();
+        }
       }
     };
 
@@ -418,16 +445,13 @@ const measurementState: MeasurementState = proxy({
       const isMeasuring = measurementState.measurementPhase === MeasurementPhase.InProgress;
       const { checkConstraints } = configState.config;
 
-      if (isMeasuring) {
-        if (drawables.face.detected) {
-          noFaceFrameCount = 0;
-        } else {
-          noFaceFrameCount++;
-          if (noFaceFrameCount >= NO_FACE_FRAME_THRESHOLD) {
-            generalState.setErrorCode(ErrorCodes.FACE_NONE);
-            noFaceFrameCount = 0;
-          }
-        }
+      if (isMeasuring && !drawables.face.detected) {
+        // The SDK fires facialLandmarksUpdated with face.detected === false exactly once,
+        // edge-triggered when the face is lost — it already debounces loss (1s pose-hold +
+        // miss/stale-frame counter), so this single event is authoritative. Dispatch FACE_NONE
+        // directly rather than counting no-face frames (the SDK no longer emits per-frame
+        // no-face callbacks — that path is gated off to spare low-end devices).
+        generalState.setErrorCode(ErrorCodes.FACE_NONE);
       }
 
       if (isPreMeasurement) {
@@ -514,7 +538,6 @@ const measurementState: MeasurementState = proxy({
     measurementState.constraintsSatisfiedStable = false;
     // Clear stabilization
     messageController.clear();
-    noFaceFrameCount = 0;
     const resetSuccess = await measurement.reset();
     if (resetSuccess) {
       loggerState.addLog(logMessages.SDK_RESET_SUCCESS, logCategory.measurement);
@@ -551,17 +574,29 @@ const measurementState: MeasurementState = proxy({
     bytesDownloaded = 0;
     filesDownloaded = [];
     totalSize = 0;
-    noFaceFrameCount = 0;
     measurement = null;
     measurementState.reinitMask();
   },
   resetRun: () => {
     Object.assign(measurementState, RUN_DEFAULTS);
-    noFaceFrameCount = 0;
     measurementState.reinitMask();
   },
   setMediaStream: async (mediaStream: MediaStream) => {
     if (measurement) {
+      // Mirror the preview for selfie (front) cameras, but NOT when the integrator requested the rear
+      // camera (cameraFacingMode: 'environment') AND the browser actually opened a rear-facing device.
+      // Rear cameras already show the real scene, so mirroring would be backwards. The actual facing
+      // mode is only knowable once the stream is open, so reconcile it here: mirrorVideo updates live
+      // via setSettings; the mask has no runtime flip setter, so it's recreated with the matching value.
+      const actualFacingMode = mediaStream.getVideoTracks()[0]?.getSettings().facingMode;
+      const openedRearCamera =
+        configState.config.cameraFacingMode === 'environment' && actualFacingMode === 'environment';
+      const mirror = !openedRearCamera;
+      if (mirror !== shouldMirror) {
+        shouldMirror = mirror;
+        measurement.setSettings({ mirrorVideo: mirror });
+        measurementState.reinitMask();
+      }
       await measurement.setMediaStream(mediaStream);
       const success = measurement.setObjectFit(mask.objectFit);
       if (success) measurement.loadMask(mask.getSvg());
@@ -577,7 +612,7 @@ const measurementState: MeasurementState = proxy({
     if (measurement) {
       measurementState.measurementPhase = MeasurementPhase.InProgress;
       measurementState.results = [];
-      noFaceFrameCount = 0;
+      payloadChunks.clear(); // start a fresh payload archive for this measurement
       resetLowSNRCount();
       const measurementOptions = { ...measurementState.measurementOptions };
       const { bypassProfile, heightCm, weightKg, ...rest } = measurementState.profile;
