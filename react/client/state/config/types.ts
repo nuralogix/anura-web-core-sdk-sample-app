@@ -6,6 +6,7 @@ export interface Config {
   cancelWhenLowSNR: boolean;
   downloadPayloads: boolean;
   defaultCameraId: string;
+  allowPartialProfile: boolean;
 }
 
 export interface ConfigState {

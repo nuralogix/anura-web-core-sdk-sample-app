@@ -10,7 +10,7 @@ import configState from '../config/state';
  */
 export const profileValidationMessages = {
   INVALID_PROFILE_TYPE: 'Profile must be a valid object. Received null or non-object value.',
-  INVALID_AGE: 'Age must be a number between 13 and 120.',
+  INVALID_AGE: 'Age must be a whole number between 13 and 120.',
   INVALID_HEIGHT: 'Height must be a number between 120 and 220.',
   INVALID_WEIGHT: 'Weight must be a number between 30 and 300.',
   INVALID_BMI: 'BMI must be between 10.0 and 65.0.',
@@ -18,6 +18,8 @@ export const profileValidationMessages = {
   INVALID_DIABETES: 'Diabetes must be a number between 4 and 6.',
   INVALID_BLOOD_PRESSURE_MEDICATION: 'Blood Pressure Medication must be either 0 or 1.',
   INVALID_SMOKING: 'Smoking must be either 0 or 1.',
+  PARTIAL_PROFILE_NOT_ALLOWED:
+    'Partial profile is not allowed. Set config.allowPartialProfile to true to use one.',
 } as const;
 
 /**
@@ -63,41 +65,59 @@ export const validateMeasurementOptions = (
 const isInvalidNumber = (value: unknown): boolean =>
   typeof value !== 'number' || Number.isNaN(value);
 
-export const validateProfile = (profile: Profile): { valid: boolean; message: string } => {
-  if (isInvalidNumber(profile.age) || profile.age < 13 || profile.age > 120) {
+/**
+ * Validates a profile. A full profile (no `partialProfile` flag) requires every
+ * field, as before. A partial profile (`partialProfile: true`) only validates
+ * the fields that are present; BMI is checked only when both height and weight are.
+ * @param allowPartial config.allowPartialProfile — a partial profile is rejected when false
+ */
+export const validateProfile = (
+  profile: Profile,
+  allowPartial: boolean
+): { valid: boolean; message: string } => {
+  const isPartial = profile.partialProfile === true;
+  if (isPartial && !allowPartial) {
+    return { valid: false, message: profileValidationMessages.PARTIAL_PROFILE_NOT_ALLOWED };
+  }
+  // A missing field is fine in a partial profile; otherwise it's invalid like any bad value
+  const isInvalid = (value: number | undefined, check: (value: number) => boolean): boolean => {
+    if (value === undefined && isPartial) return false;
+    return isInvalidNumber(value) || !check(value as number);
+  };
+
+  if (isInvalid(profile.age, (v) => Number.isInteger(v) && v >= 13 && v <= 120)) {
     return { valid: false, message: profileValidationMessages.INVALID_AGE };
   }
 
-  if (isInvalidNumber(profile.heightCm) || profile.heightCm < 120 || profile.heightCm > 220) {
+  if (isInvalid(profile.heightCm, (v) => v >= 120 && v <= 220)) {
     return { valid: false, message: profileValidationMessages.INVALID_HEIGHT };
   }
 
-  if (isInvalidNumber(profile.weightKg) || profile.weightKg < 30 || profile.weightKg > 300) {
+  if (isInvalid(profile.weightKg, (v) => v >= 30 && v <= 300)) {
     return { valid: false, message: profileValidationMessages.INVALID_WEIGHT };
   }
 
-  const heightInMeters = profile.heightCm / 100;
-  const bmi = profile.weightKg / (heightInMeters * heightInMeters);
-  if (bmi < 10.0 || bmi > 65.0) {
-    return { valid: false, message: profileValidationMessages.INVALID_BMI };
+  if (profile.heightCm !== undefined && profile.weightKg !== undefined) {
+    const heightInMeters = profile.heightCm / 100;
+    const bmi = profile.weightKg / (heightInMeters * heightInMeters);
+    if (bmi < 10.0 || bmi > 65.0) {
+      return { valid: false, message: profileValidationMessages.INVALID_BMI };
+    }
   }
 
-  if (isInvalidNumber(profile.sex) || profile.sex < 1 || profile.sex > 3) {
+  if (isInvalid(profile.sex, (v) => v >= 1 && v <= 3)) {
     return { valid: false, message: profileValidationMessages.INVALID_SEX };
   }
 
-  if (isInvalidNumber(profile.diabetes) || profile.diabetes < 4 || profile.diabetes > 6) {
+  if (isInvalid(profile.diabetes, (v) => v >= 4 && v <= 6)) {
     return { valid: false, message: profileValidationMessages.INVALID_DIABETES };
   }
 
-  if (
-    isInvalidNumber(profile.bloodPressureMedication) ||
-    (profile.bloodPressureMedication !== 0 && profile.bloodPressureMedication !== 1)
-  ) {
+  if (isInvalid(profile.bloodPressureMedication, (v) => v === 0 || v === 1)) {
     return { valid: false, message: profileValidationMessages.INVALID_BLOOD_PRESSURE_MEDICATION };
   }
 
-  if (isInvalidNumber(profile.smoking) || (profile.smoking !== 0 && profile.smoking !== 1)) {
+  if (isInvalid(profile.smoking, (v) => v === 0 || v === 1)) {
     return { valid: false, message: profileValidationMessages.INVALID_SMOKING };
   }
 

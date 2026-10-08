@@ -3,7 +3,11 @@
   "compilerOptions": {
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "rootDir": "./"
+    "rootDir": "./",
+    // Only load the type packages the server uses. Without this every @types/* in
+    // node_modules is loaded, including the empty @types/minimatch stub pulled in by
+    // rollup-plugin-copy -> globby -> @types/glob, which fails with TS2688.
+    "types": ["node"]
   },
   "include": [
     "./**/*.ts",

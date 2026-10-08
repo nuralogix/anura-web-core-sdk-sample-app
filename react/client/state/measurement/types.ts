@@ -7,11 +7,30 @@ import type {
 } from '@nuralogix.ai/anura-web-core-sdk';
 import type { ConstraintCode } from './utils';
 
-export interface Profile extends Omit<Demographics, 'height' | 'weight'> {
+/**
+ * Full profile: every field is required. This is the default (and the only
+ * shape before partial profiles were supported), so existing code that builds
+ * profiles without `partialProfile` keeps its behaviour and type checks.
+ */
+export interface FullProfile extends Required<Omit<Demographics, 'height' | 'weight'>> {
   heightCm: number;
   weightKg: number;
   bypassProfile: boolean;
+  partialProfile?: false;
 }
+
+/**
+ * Partial profile: any subset of fields. Only the fields provided are
+ * validated and sent to the SDK; the backend only considers what it receives.
+ */
+export interface PartialProfile extends Omit<Demographics, 'height' | 'weight'> {
+  heightCm?: number;
+  weightKg?: number;
+  bypassProfile: boolean;
+  partialProfile: true;
+}
+
+export type Profile = FullProfile | PartialProfile;
 
 export enum MeasurementPhase {
   Idle = 'idle',

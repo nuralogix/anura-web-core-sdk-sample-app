@@ -21,6 +21,10 @@ export const DEFAULT_CONFIG: Config = {
   // directly. If the supplied ID does not match any connected device, the browser's
   // default camera is used.
   defaultCameraId: '',
+  // When true, every profile form field is optional: users can fill in any subset
+  // (e.g. only height and weight) and only those values are sent with the measurement.
+  // When false (default), every field is required, as in earlier versions.
+  allowPartialProfile: false,
 };
 
 // `cameraFacingMode` takes precedence over `defaultCameraId`. A `defaultCameraId` 

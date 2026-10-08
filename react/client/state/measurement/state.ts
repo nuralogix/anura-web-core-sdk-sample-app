@@ -3,6 +3,7 @@ import {
   faceTrackerState,
   type ConstraintFeedback,
   type ConstraintStatus,
+  type Demographics,
   type DFXResults,
   type IsoDate,
   type MediaElementResizeEvent,
@@ -119,7 +120,17 @@ const initMeasurement = async (
   return instance;
 };
 
-const defaultProfile = loadSavedProfile() || {
+// A saved profile that isn't valid under the current config (e.g. a partial profile
+// when allowPartialProfile is off) is loaded as bypassed, so it isn't sent. Its values
+// are kept so the profile form can still prefill them.
+const loadValidSavedProfile = (): Profile | null => {
+  const saved = loadSavedProfile();
+  if (!saved || saved.bypassProfile) return saved;
+  const { valid } = validateProfile(saved, configState.config.allowPartialProfile);
+  return valid ? saved : { ...saved, bypassProfile: true };
+};
+
+const defaultProfile = loadValidSavedProfile() || {
   age: 0,
   heightCm: 0,
   weightKg: 0,
@@ -615,11 +626,31 @@ const measurementState: MeasurementState = proxy({
       payloadChunks.clear(); // start a fresh payload archive for this measurement
       resetLowSNRCount();
       const measurementOptions = { ...measurementState.measurementOptions };
-      const { bypassProfile, heightCm, weightKg, ...rest } = measurementState.profile;
-      const demographics = { height: heightCm, weight: weightKg, ...rest };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { bypassProfile, partialProfile, heightCm, weightKg, ...rest } = measurementState.profile;
+      // Drop fields that weren't provided (partial profile) so only real values are sent
+      const demographics: Demographics = Object.fromEntries(
+        Object.entries({ height: heightCm, weight: weightKg, ...rest }).filter(
+          ([, value]) => value !== undefined
+        )
+      );
 
-      // Set profile only if bypassProfile is false
-      if (!bypassProfile) {
+      // Re-validate against the current config: config can change after the profile
+      // was set or loaded (e.g. allowPartialProfile turned off with a partial profile).
+      const validation = bypassProfile
+        ? null
+        : validateProfile(measurementState.profile, configState.config.allowPartialProfile);
+
+      // setDemographics replaces whatever was set before, so when the profile is
+      // bypassed (or not valid) clear it explicitly; otherwise an earlier profile would still be sent.
+      if (bypassProfile) {
+        measurement.setDemographics({});
+      } else if (validation && !validation.valid) {
+        measurement.setDemographics({});
+        loggerState.addLog(logMessages.PROFILE_INVALID, logCategory.measurement, {
+          message: validation.message,
+        });
+      } else {
         measurement.setDemographics(demographics);
         loggerState.addLog(logMessages.MEASUREMENT_DEMOGRAPHICS_SET, logCategory.measurement, {
           demographics,
@@ -656,9 +687,13 @@ const measurementState: MeasurementState = proxy({
     }
 
     if (profile.bypassProfile) {
+      // Store the bypass flag (keeping the field values so the form can still prefill);
+      // without this a previously set profile stayed active and was still sent.
+      measurementState.profile = profile;
+      saveProfile(profile);
       loggerState.addLog(logMessages.PROFILE_INFO_NOT_SET, logCategory.measurement);
     } else {
-      const validation = validateProfile(profile);
+      const validation = validateProfile(profile, configState.config.allowPartialProfile);
       if (!validation.valid) {
         loggerState.addLog(logMessages.PROFILE_INVALID, logCategory.measurement, {
           message: validation.message,

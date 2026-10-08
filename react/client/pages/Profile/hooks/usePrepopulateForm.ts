@@ -9,8 +9,10 @@ import type { FormState } from '../types';
 const populateField = <K extends keyof FormState>(
   formState: FormState,
   fieldKey: K,
-  value: number
+  value: number | undefined
 ): void => {
+  // A partial profile may not have every field
+  if (value === undefined) return;
   if (!formState[fieldKey]) {
     formState[fieldKey] = String(value) as FormState[K];
   }
