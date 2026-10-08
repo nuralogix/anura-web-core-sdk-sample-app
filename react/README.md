@@ -110,11 +110,11 @@ In the package.json, modify the browserslist section to update the list of suppo
 
 ```javascript
 "browserslist": [
-  "Safari >= 18",
+  "Safari >= 26",
   "last 3 versions",
 ]
 ```
 
-- `Safari >= 18` tells build tools: don’t support Safari below 18.
+- `Safari >= 26` tells build tools: don’t support Safari below 26.
 - `last 3 versions` still covers other browsers (Chrome, Firefox, Edge).
 

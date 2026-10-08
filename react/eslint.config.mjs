@@ -10,6 +10,11 @@ import valtio from 'eslint-plugin-valtio';
 // shared rules
 const sharedRules = {
   ...eslint.configs.recommended.rules,
+  // Turn off core rules that TypeScript already checks and that misfire on TS code
+  // (no-undef, no-redeclare, ...). The core no-unused-vars is replaced by the
+  // @typescript-eslint version below.
+  ...tseslint.configs.eslintRecommended.rules,
+  'no-unused-vars': 'off',
   ...tseslint.configs.recommendedTypeChecked.rules,
   ...tseslint.configs.strictTypeChecked.rules,
   ...tseslint.configs.stylisticTypeChecked.rules,
@@ -17,6 +22,13 @@ const sharedRules = {
   "no-console": "error",
   "semi": "error",
   '@typescript-eslint/no-unused-vars': ['error', { 'argsIgnorePattern': '^_' }],
+}
+
+// Plugins that sharedRules reference. In flat config every plugin used by a rule
+// must be registered in the same config object as the rule.
+const sharedPlugins = {
+  '@typescript-eslint': tseslint.plugin,
+  'valtio': valtio,
 }
 
 export default [
@@ -45,9 +57,10 @@ export default [
       }      
     },
     plugins: {
+      ...sharedPlugins,
       'react': eslintPluginReact,
       'react-hooks': eslintPluginReactHooks,
-      'jsx-a11y': jsxA11yPlugin
+      'jsx-a11y': jsxA11yPlugin,
     },
     settings: {
       react: {
@@ -57,6 +70,8 @@ export default [
     rules: {
       ...sharedRules,
       ...eslintPluginReact.configs.recommended.rules,
+      // The app uses the automatic JSX runtime ("jsx": "react-jsx"), so React needn't be in scope
+      ...eslintPluginReact.configs['jsx-runtime'].rules,
       ...eslintPluginReactHooks.configs.recommended.rules,
       ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/anchor-ambiguous-text': 'error',
@@ -77,10 +92,13 @@ export default [
       },
       globals: {
         ...globals.node
-      }      
+      }
+    },
+    plugins: {
+      ...sharedPlugins,
     },
     rules: {
       ...sharedRules,
-    }    
+    }
   },  
 ];

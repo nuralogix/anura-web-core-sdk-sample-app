@@ -1,6 +1,6 @@
 {
   "name": "anura-web-core-sdk-cdn-sample-app",
-  "version": "0.1.0-beta.18",
+  "version": "0.1.0-beta.22",
   "description": "Anura Web Core SDK - CDN",
   "author": "Hamed Hassanzadeh Amin",
   "main": "index.ts",
@@ -14,7 +14,7 @@
     "node": ">=26"
   },
   "browserslist": [
-    "Safari >= 18",
+    "Safari >= 26",
     "last 3 versions"
   ]
 }
