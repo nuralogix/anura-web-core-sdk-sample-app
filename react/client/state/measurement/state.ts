@@ -72,8 +72,8 @@ const shouldSwapCoordinates = () =>
   isIOS() && !(window.screen?.orientation?.type ?? '').startsWith('landscape');
 
 // Whether the preview + mask should be horizontally mirrored (selfie view). True by default; flipped
-// to false once we detect the integrator asked for the rear camera AND a rear-facing device actually
-// opened (see setMediaStream). mirrorVideo (Settings) and shouldFlipHorizontally (mask) are one
+// to false while a rear-facing camera is open (see setMediaStream) and reset when the session ends
+// (resetSession). mirrorVideo (Settings) and shouldFlipHorizontally (mask) are one
 // logical setting split across the Measurement module and the mask, so they must always match.
 let shouldMirror = true;
 
@@ -586,6 +586,9 @@ const measurementState: MeasurementState = proxy({
     filesDownloaded = [];
     totalSize = 0;
     measurement = null;
+    // Module state outlives destroy(): start the next session from the default (mirrored)
+    // rather than whatever the last camera was, e.g. unmirrored after a rear camera.
+    shouldMirror = true;
     measurementState.reinitMask();
   },
   resetRun: () => {
@@ -594,15 +597,14 @@ const measurementState: MeasurementState = proxy({
   },
   setMediaStream: async (mediaStream: MediaStream) => {
     if (measurement) {
-      // Mirror the preview for selfie (front) cameras, but NOT when the integrator requested the rear
-      // camera (cameraFacingMode: 'environment') AND the browser actually opened a rear-facing device.
-      // Rear cameras already show the real scene, so mirroring would be backwards. The actual facing
-      // mode is only knowable once the stream is open, so reconcile it here: mirrorVideo updates live
-      // via setSettings; the mask has no runtime flip setter, so it's recreated with the matching value.
+      // Mirror the preview for selfie (front) cameras, but NOT for a rear-facing camera, however it
+      // was chosen (cameraFacingMode, defaultCameraId or the camera selector). Rear cameras already
+      // show the real scene, so mirroring would be backwards. The actual facing mode is only knowable
+      // once the stream is open, so reconcile it here: mirrorVideo updates live via setSettings; the
+      // mask has no runtime flip setter, so it's recreated with the matching value. Cameras that
+      // don't report a facing mode (e.g. desktop webcams) are treated as front-facing.
       const actualFacingMode = mediaStream.getVideoTracks()[0]?.getSettings().facingMode;
-      const openedRearCamera =
-        configState.config.cameraFacingMode === 'environment' && actualFacingMode === 'environment';
-      const mirror = !openedRearCamera;
+      const mirror = actualFacingMode !== 'environment';
       if (mirror !== shouldMirror) {
         shouldMirror = mirror;
         measurement.setSettings({ mirrorVideo: mirror });
