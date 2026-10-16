@@ -77,7 +77,7 @@ export default class Server {
                 DeviceTypeID: DeviceTypeID.WIN32,
                 Name: 'Anura Web Core SDK',
                 Identifier: 'ANURA_WEB_CORE_SDK',
-                Version: '0.1.0-beta.23',
+                Version: '0.1.0-beta.24',
                 TokenExpiresIn: tokenExpiresIn
             };
             const registerLicense = await this.apiClient.http.organizations.registerLicense(payload, false);
