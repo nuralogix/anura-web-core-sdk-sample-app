@@ -16,7 +16,6 @@ import {
   errorCategories,
   realtimeResultErrors,
   realtimeResultNotes,
-  faceAttributeValue,
 } from '@nuralogix.ai/anura-web-core-sdk';
 import { AnuraMask } from '@nuralogix.ai/anura-web-core-sdk/masks/anura';
 import { proxy } from 'valtio';
@@ -44,8 +43,6 @@ import { loadSavedProfile, saveProfile } from '../../utils/localStorage';
 import { createZip, type ZipEntry } from '../../utils/zip';
 
 const { ASSETS_NOT_DOWNLOADED } = faceTrackerState;
-const { SEX_ASSIGNED_MALE_AT_BIRTH, SMOKER_FALSE, BLOOD_PRESSURE_MEDICATION_FALSE, DIABETES_NONE } =
-  faceAttributeValue;
 
 const downloadFile = (data: Uint8Array, filename: string, mimeType = 'application/octet-stream') => {
   const blob = new Blob([data.buffer as ArrayBuffer], { type: mimeType });
@@ -130,15 +127,11 @@ const loadValidSavedProfile = (): Profile | null => {
   return valid ? saved : { ...saved, bypassProfile: true };
 };
 
-const defaultProfile = loadValidSavedProfile() || {
-  age: 0,
-  heightCm: 0,
-  weightKg: 0,
-  sex: SEX_ASSIGNED_MALE_AT_BIRTH,
-  smoking: SMOKER_FALSE,
-  bloodPressureMedication: BLOOD_PRESSURE_MEDICATION_FALSE,
-  diabetes: DIABETES_NONE,
+// No saved profile yet: skipped, with no answers. It used to carry placeholder values
+// (age 0, sex male, ...) that "Skip profile" saved and the form later prefilled as answers.
+const defaultProfile: Profile = loadValidSavedProfile() || {
   bypassProfile: true,
+  partialProfile: true,
 };
 
 let mask = new AnuraMask(getMaskSettings());
